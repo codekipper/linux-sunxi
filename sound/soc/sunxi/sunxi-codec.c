@@ -215,9 +215,6 @@ static int sunxi_codec_prepare(struct snd_pcm_substream *substream,
 			regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 0x1 << SUNXI_DAC_FIFOC_FIR_VERSION, 0x1 << SUNXI_DAC_FIFOC_FIR_VERSION);
 		}
 
-		/* set TX FIFO MODE - 0 works for both 16 and 24 bits */
-		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 0x1 << SUNXI_DAC_FIFOC_TX_FIFO_MODE, 0x0 << SUNXI_DAC_FIFOC_TX_FIFO_MODE);
-
 		/* send last sample when DAC FIFO under run */
 		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 0x1 << SUNXI_DAC_FIFOC_SEND_LASAT, 0x0 << SUNXI_DAC_FIFOC_SEND_LASAT);
 	} else {
@@ -329,6 +326,7 @@ static int sunxi_codec_hw_params(struct snd_pcm_substream *substream,
 		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 7 << SUNXI_DAC_FIFOC_DAC_FS, hwrate << SUNXI_DAC_FIFOC_DAC_FS);
 		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 1 << SUNXI_DAC_FIFOC_MONO_EN, is_mono << SUNXI_DAC_FIFOC_MONO_EN);
 		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 1 << SUNXI_DAC_FIFOC_TX_SAMPLE_BITS, is_24bit << SUNXI_DAC_FIFOC_TX_SAMPLE_BITS);
+		regmap_update_bits(priv->regmap, SUNXI_DAC_FIFOC, 1 << SUNXI_DAC_FIFOC_TX_FIFO_MODE, !is_24bit << SUNXI_DAC_FIFOC_TX_FIFO_MODE);
 		if (is_24bit)
 			priv->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		else

@@ -93,6 +93,15 @@
 	status = "okay";
 };
 
+&codec {
+	routing =
+		"MIC_IN", "Microphone Jack",
+		"Microphone Jack", "Mic Bias",
+		"LINE_IN", "Line In Jack",
+		"Headphone Jack", "HP_OUT";
+	status = "okay";
+};
+
 &ehci0 {
 	status = "okay";
 };

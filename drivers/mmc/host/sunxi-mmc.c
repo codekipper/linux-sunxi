@@ -289,6 +289,24 @@ static int sunxi_mmc_init_host(struct mmc_host *mmc)
 	return 0;
 }
 
+/* Wait for card to report ready before starting a new cmd */
+static int sunxi_mmc_wait_card_ready(struct sunxi_mmc_host *host)
+{
+	unsigned long expire = jiffies + msecs_to_jiffies(500);
+	u32 rval;
+
+	do {
+		rval = mmc_readl(host, REG_STAS);
+	} while (time_before(jiffies, expire) && (rval & SDXC_CARD_DATA_BUSY));
+
+	if (rval & SDXC_CARD_DATA_BUSY) {
+		dev_err(mmc_dev(host->mmc), "Error R1 ready timeout\n");
+		return -EIO;
+	}
+
+	return 0;
+}
+
 static void sunxi_mmc_init_idma_des(struct sunxi_mmc_host *host,
 				    struct mmc_data *data)
 {
@@ -382,6 +400,8 @@ static void sunxi_mmc_send_manual_stop(struct sunxi_mmc_host *host,
 {
 	u32 arg, cmd_val, ri;
 	unsigned long expire = jiffies + msecs_to_jiffies(1000);
+
+	sunxi_mmc_wait_card_ready(host);
 
 	cmd_val = SDXC_START | SDXC_RESP_EXPIRE |
 		  SDXC_STOP_ABORT_CMD | SDXC_CHECK_RESPONSE_CRC;
@@ -597,6 +617,11 @@ static int sunxi_mmc_oclk_onoff(struct sunxi_mmc_host *host, u32 oclk_en)
 {
 	unsigned long expire = jiffies + msecs_to_jiffies(250);
 	u32 rval;
+	int ret;
+
+	ret = sunxi_mmc_wait_card_ready(host);
+	if (ret)
+		return ret;
 
 	rval = mmc_readl(host, REG_CLKCR);
 	rval &= ~(SDXC_CARD_CLOCK_ON | SDXC_LOW_POWER_ON);
@@ -781,6 +806,13 @@ static void sunxi_mmc_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	/* Check for set_ios errors (should never happen) */
 	if (host->ferror) {
 		mrq->cmd->error = host->ferror;
+		mmc_request_done(mmc, mrq);
+		return;
+	}
+
+	ret = sunxi_mmc_wait_card_ready(host);
+	if (ret) {
+		mrq->cmd->error = ret;
 		mmc_request_done(mmc, mrq);
 		return;
 	}

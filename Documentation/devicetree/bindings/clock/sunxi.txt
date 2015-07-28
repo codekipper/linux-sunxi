@@ -73,6 +73,7 @@ Required properties:
 	"allwinner,sun9i-a80-mmc-config-clk" - for mmc gates + resets on A80
 	"allwinner,sun4i-a10-mod0-clk" - for the module 0 family of clocks
 	"allwinner,sun9i-a80-mod0-clk" - for module 0 (storage) clocks on A80
+	"allwinner,sun4i-a10-mod1-clk" - for the module 1 family of clocks
 	"allwinner,sun8i-a23-mbus-clk" - for the MBUS clock on A23
 	"allwinner,sun7i-a20-out-clk" - for the external output clocks
 	"allwinner,sun7i-a20-gmac-clk" - for the GMAC clock module on A20/A31

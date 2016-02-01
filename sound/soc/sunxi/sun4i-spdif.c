@@ -363,6 +363,34 @@ static int sun4i_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 		ret = -EINVAL;
 		break;
 	}
+	{
+	/* COOPS DEBUGGING FOR NOW */
+	struct platform_device *pdev = host->pdev;
+	u32 reg_val = 0;
+
+	dev_err(&pdev->dev,
+			"Command State %d Audio Clock is %lu\n", cmd, clk_get_rate(host->spdif_clk));
+
+	regmap_read(host->regmap, SUN4I_SPDIF_CTL, &reg_val);
+	dev_err(&pdev->dev,
+			"OWA_GEN_CTL 0x%x\n", reg_val);
+	regmap_read(host->regmap, SUN4I_SPDIF_TXCFG, &reg_val);
+	dev_err(&pdev->dev,
+			"OWA_TX_CFIG 0x%x\n", reg_val);
+	regmap_read(host->regmap, SUN4I_SPDIF_FCTL, &reg_val);
+	dev_err(&pdev->dev,
+			"OWA_FCTL 0x%x\n", reg_val);
+	regmap_read(host->regmap, SUN4I_SPDIF_FSTA, &reg_val);
+	dev_err(&pdev->dev,
+			"OWA_FSTA 0x%x\n", reg_val);
+	regmap_read(host->regmap, SUN4I_SPDIF_TXCHSTA0, &reg_val);
+	dev_err(&pdev->dev,
+			"OWA_TX_CHSTA0 0x%x\n", reg_val);
+	regmap_read(host->regmap, SUN4I_SPDIF_TXCHSTA1, &reg_val);
+	dev_err(&pdev->dev,
+			"OWA_TX_CHSTA1 0x%x\n", reg_val);
+	}
+
 	return ret;
 }
 

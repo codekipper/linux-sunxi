@@ -3,7 +3,6 @@ Allwinner Sony/Philips Digital Interface Format (S/PDIF) Controller
 The Allwinner S/PDIF audio block is a transceiver that allows the
 processor to receive and transmit digital audio via an coaxial cable or
 a fibre cable.
-For now only playback is supported.
 
 Required properties:
 
@@ -29,6 +28,12 @@ Required properties:
 
   - resets		: reset specifier for the ahb reset (A31 and newer only)
 
+Optional:
+
+  - spdif-in		: Enable block for capturing an SPDIF signal.
+
+  - spdif-out		: Enable block for transmitting an SPDIF signal.
+
 Example:
 
 spdif: spdif@01c21000 {
@@ -39,5 +44,7 @@ spdif: spdif@01c21000 {
 	clock-names = "apb", "spdif";
 	dmas = <&dma 0 2>, <&dma 0 2>;
 	dma-names = "rx", "tx";
+	spdif-in = "disabled";
+	spdif-out = "okay";
 	status = "okay";
 };

@@ -64,6 +64,9 @@
 #define SUN4I_CODEC_DAC_ACTL_DACAENR			(31)
 #define SUN4I_CODEC_DAC_ACTL_DACAENL			(30)
 #define SUN4I_CODEC_DAC_ACTL_MIXEN			(29)
+#define SUN4I_CODEC_DAC_ACTL_LNG			(26)
+#define SUN4I_CODEC_DAC_ACTL_FMG			(23)
+#define SUN4I_CODEC_DAC_ACTL_MICG			(20)
 #define SUN4I_CODEC_DAC_ACTL_LDACLMIXS			(15)
 #define SUN4I_CODEC_DAC_ACTL_RDACRMIXS			(14)
 #define SUN4I_CODEC_DAC_ACTL_LDACRMIXS			(13)
@@ -681,6 +684,15 @@ static DECLARE_TLV_DB_SCALE(sun4i_codec_adc_input_gain_control_scale,
 static DECLARE_TLV_DB_SCALE(sun4i_codec_line_in_gain_control_scale,
 			    -1200, 300, 0);
 
+static DECLARE_TLV_DB_SCALE(sun4i_codec_line_in_to_output_gain_control_scale,
+			    -150, 150, 0);
+
+static DECLARE_TLV_DB_SCALE(sun4i_codec_fm_to_output_gain_control_scale,
+			    -450, 150, 0);
+
+static DECLARE_TLV_DB_SCALE(sun4i_codec_mic_to_output_gain_control_scale,
+			    -450, 150, 0);
+
 static const struct snd_kcontrol_new sun4i_codec_controls[] = {
 	SOC_SINGLE_TLV("Power Amplifier Playback Volume", SUN4I_CODEC_DAC_ACTL,
 		       SUN4I_CODEC_DAC_ACTL_PA_VOL, 0x3F, 0,
@@ -691,6 +703,15 @@ static const struct snd_kcontrol_new sun4i_codec_controls[] = {
 	SOC_SINGLE_TLV("Line-In Volume", SUN4I_CODEC_ADC_ACTL,
 		       SUN4I_CODEC_ADC_ACTL_LNPREG, 0x7, 0,
 		       sun4i_codec_line_in_gain_control_scale),
+	SOC_SINGLE_TLV("Line-In Loopback Playback Volume", SUN4I_CODEC_DAC_ACTL,
+		       SUN4I_CODEC_DAC_ACTL_LNG, 0x1, 0,
+		       sun4i_codec_line_in_to_output_gain_control_scale),
+	SOC_SINGLE_TLV("FM Playback Volume", SUN4I_CODEC_DAC_ACTL,
+		       SUN4I_CODEC_DAC_ACTL_FMG, 0x7, 0,
+		       sun4i_codec_fm_to_output_gain_control_scale),
+	SOC_SINGLE_TLV("MIC Playback Volume", SUN4I_CODEC_DAC_ACTL,
+		       SUN4I_CODEC_DAC_ACTL_MICG, 0x7, 0,
+		       sun4i_codec_mic_to_output_gain_control_scale),
 };
 
 static const struct snd_kcontrol_new sun4i_codec_left_mixer_controls[] = {

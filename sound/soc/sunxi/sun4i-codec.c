@@ -668,6 +668,20 @@ static struct snd_soc_dai_driver sun4i_codec_dai = {
 };
 
 /*** sun4i Codec ***/
+static const char * const sun4i_codec_input_sel[] = {
+	"Line In",
+	"FM In",
+	"Mic1",
+	"Mic2",
+	"Mic1 + Mic2",
+	"Mic1 + Mic2(mixed)",
+	"Left Mixer + Right Mixer",
+	"Left Line In + Mic1"
+};
+
+static SOC_ENUM_SINGLE_DECL(sun4i_codec_input_sel_enum, SUN4I_CODEC_ADC_ACTL,
+			    SUN4I_CODEC_ADC_ACTL_ADCIS, sun4i_codec_input_sel);
+
 static const struct snd_kcontrol_new sun4i_codec_pa_mute =
 	SOC_DAPM_SINGLE("Switch", SUN4I_CODEC_DAC_ACTL,
 			SUN4I_CODEC_DAC_ACTL_PA_MUTE, 1, 0);
@@ -705,7 +719,14 @@ static const struct snd_kcontrol_new sun4i_codec_pa_mixer_controls[] = {
 			SUN4I_CODEC_DAC_ACTL_MIXPAS, 1, 0),
 };
 
+/* Input mux */
+static const struct snd_kcontrol_new sun4i_codec_input_mux_control =
+	SOC_DAPM_ENUM("Route", sun4i_codec_input_sel_enum);
+
 static const struct snd_soc_dapm_widget sun4i_codec_codec_dapm_widgets[] = {
+	SND_SOC_DAPM_MUX("Input Mux Capture Route", SND_SOC_NOPM, 0, 0,
+			 &sun4i_codec_input_mux_control),
+
 	/* Digital parts of the ADCs */
 	SND_SOC_DAPM_SUPPLY("ADC", SUN4I_CODEC_ADC_FIFOC,
 			    SUN4I_CODEC_ADC_FIFOC_EN_AD, 0,
@@ -757,6 +778,8 @@ static const struct snd_soc_dapm_widget sun4i_codec_codec_dapm_widgets[] = {
 			    &sun4i_codec_pa_mute),
 
 	SND_SOC_DAPM_INPUT("Mic1"),
+	SND_SOC_DAPM_INPUT("Line-In Right"),
+	SND_SOC_DAPM_INPUT("Line-In Left"),
 
 	SND_SOC_DAPM_OUTPUT("HP Right"),
 	SND_SOC_DAPM_OUTPUT("HP Left"),
@@ -770,6 +793,16 @@ static const struct snd_soc_dapm_route sun4i_codec_codec_dapm_routes[] = {
 	/* Right ADC / DAC Routes */
 	{ "Right ADC", NULL, "ADC" },
 	{ "Right DAC", NULL, "DAC" },
+
+	/* Left Input Mux Routes */
+	{ "Left ADC", NULL, "Input Mux Capture Route" },
+	{ "Input Mux Capture Route", "Line In", "Line-In Left" },
+	{ "Input Mux Capture Route", "Mic1", "MIC1 Pre-Amplifier" },
+
+	/* Right Input Mux Routes */
+	{ "Right ADC", NULL, "Input Mux Capture Route" },
+	{ "Input Mux Capture Route", "Line In", "Line-In Right" },
+	{ "Input Mux Capture Route", "Mic1", "MIC1 Pre-Amplifier" },
 
 	/* Right Mixer Routes */
 	{ "Right Mixer", NULL, "Mixer Enable" },

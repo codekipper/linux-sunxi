@@ -97,6 +97,8 @@
 #define SUN4I_CODEC_ADC_ACTL_PREG1EN			(29)
 #define SUN4I_CODEC_ADC_ACTL_PREG2EN			(28)
 #define SUN4I_CODEC_ADC_ACTL_VMICEN			(27)
+#define SUN4I_CODEC_ADC_ACTL_PREG1			(25)
+#define SUN4I_CODEC_ADC_ACTL_PREG2			(23)
 #define SUN4I_CODEC_ADC_ACTL_VADCG			(20)
 #define SUN4I_CODEC_ADC_ACTL_ADCIS			(17)
 #define SUN4I_CODEC_ADC_ACTL_LNPREG			(13)
@@ -693,6 +695,8 @@ static DECLARE_TLV_DB_SCALE(sun4i_codec_fm_to_output_gain_control_scale,
 static DECLARE_TLV_DB_SCALE(sun4i_codec_mic_to_output_gain_control_scale,
 			    -450, 150, 0);
 
+static DECLARE_TLV_DB_SCALE(sun4i_codec_mic_gain_control_scale, 3200, 300, 0);
+
 static const struct snd_kcontrol_new sun4i_codec_controls[] = {
 	SOC_SINGLE_TLV("Power Amplifier Playback Volume", SUN4I_CODEC_DAC_ACTL,
 		       SUN4I_CODEC_DAC_ACTL_PA_VOL, 0x3F, 0,
@@ -712,6 +716,12 @@ static const struct snd_kcontrol_new sun4i_codec_controls[] = {
 	SOC_SINGLE_TLV("MIC Playback Volume", SUN4I_CODEC_DAC_ACTL,
 		       SUN4I_CODEC_DAC_ACTL_MICG, 0x7, 0,
 		       sun4i_codec_mic_to_output_gain_control_scale),
+	SOC_SINGLE_TLV("MIC1 Volume", SUN4I_CODEC_ADC_ACTL,
+		       SUN4I_CODEC_ADC_ACTL_PREG1, 0x3, 0,
+		       sun4i_codec_mic_gain_control_scale),
+	SOC_SINGLE_TLV("MIC2 Volume", SUN4I_CODEC_ADC_ACTL,
+		       SUN4I_CODEC_ADC_ACTL_PREG2, 0x3, 0,
+		       sun4i_codec_mic_gain_control_scale),
 };
 
 static const struct snd_kcontrol_new sun4i_codec_left_mixer_controls[] = {

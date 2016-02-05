@@ -96,6 +96,7 @@
 #define SUN4I_CODEC_ADC_ACTL_VMICEN			(27)
 #define SUN4I_CODEC_ADC_ACTL_VADCG			(20)
 #define SUN4I_CODEC_ADC_ACTL_ADCIS			(17)
+#define SUN4I_CODEC_ADC_ACTL_LNPREG			(13)
 #define SUN4I_CODEC_ADC_ACTL_PA_EN			(4)
 #define SUN4I_CODEC_ADC_ACTL_DDE			(3)
 #define SUN4I_CODEC_ADC_DEBUG			(0x2c)
@@ -677,6 +678,9 @@ static DECLARE_TLV_DB_SCALE(sun4i_codec_pa_volume_scale, -6300, 100, 1);
 static DECLARE_TLV_DB_SCALE(sun4i_codec_adc_input_gain_control_scale,
 			    -450, 150, 0);
 
+static DECLARE_TLV_DB_SCALE(sun4i_codec_line_in_gain_control_scale,
+			    -1200, 300, 0);
+
 static const struct snd_kcontrol_new sun4i_codec_controls[] = {
 	SOC_SINGLE_TLV("Power Amplifier Playback Volume", SUN4I_CODEC_DAC_ACTL,
 		       SUN4I_CODEC_DAC_ACTL_PA_VOL, 0x3F, 0,
@@ -684,6 +688,9 @@ static const struct snd_kcontrol_new sun4i_codec_controls[] = {
 	SOC_SINGLE_TLV("ADC Gain Capture Volume", SUN4I_CODEC_ADC_ACTL,
 		       SUN4I_CODEC_ADC_ACTL_VADCG, 0x7, 0,
 		       sun4i_codec_adc_input_gain_control_scale),
+	SOC_SINGLE_TLV("Line-In Volume", SUN4I_CODEC_ADC_ACTL,
+		       SUN4I_CODEC_ADC_ACTL_LNPREG, 0x7, 0,
+		       sun4i_codec_line_in_gain_control_scale),
 };
 
 static const struct snd_kcontrol_new sun4i_codec_left_mixer_controls[] = {
@@ -762,6 +769,10 @@ static const struct snd_soc_dapm_widget sun4i_codec_codec_dapm_widgets[] = {
 			   ARRAY_SIZE(sun4i_codec_pa_mixer_controls)),
 	SND_SOC_DAPM_SWITCH("Power Amplifier Mute", SND_SOC_NOPM, 0, 0,
 			    &sun4i_codec_pa_mute),
+
+	/* Line-In Pre-Amplifiers */
+	SND_SOC_DAPM_PGA("Line-In Pre-Amplifier", SUN4I_CODEC_ADC_ACTL,
+			 SUN4I_CODEC_ADC_ACTL_PREG1EN, 0, NULL, 0),
 
 	SND_SOC_DAPM_INPUT("Mic1"),
 	SND_SOC_DAPM_INPUT("Line-In Right"),

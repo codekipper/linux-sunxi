@@ -74,6 +74,10 @@
 #define SUN4I_CODEC_DAC_ACTL_LDACLMIXS			(15)
 #define SUN4I_CODEC_DAC_ACTL_RDACRMIXS			(14)
 #define SUN4I_CODEC_DAC_ACTL_LDACRMIXS			(13)
+#define SUN4I_CODEC_DAC_ACTL_MIC1LS			(12)
+#define SUN4I_CODEC_DAC_ACTL_MIC1RS			(11)
+#define SUN4I_CODEC_DAC_ACTL_MIC2LS			(10)
+#define SUN4I_CODEC_DAC_ACTL_MIC2RS			(9)
 #define SUN4I_CODEC_DAC_ACTL_DACPAS			(8)
 #define SUN4I_CODEC_DAC_ACTL_MIXPAS			(7)
 #define SUN4I_CODEC_DAC_ACTL_PA_MUTE			(6)
@@ -733,6 +737,12 @@ static const struct snd_kcontrol_new sun4i_codec_controls[] = {
 		   SUN4I_CODEC_DAC_ACTL_LLNS, SUN4I_CODEC_DAC_ACTL_RLNS, 1, 0),
 	SOC_DOUBLE("FM Playback Switch", SUN4I_CODEC_DAC_ACTL,
 		   SUN4I_CODEC_DAC_ACTL_LFMS, SUN4I_CODEC_DAC_ACTL_RFMS, 1, 0),
+	SOC_DOUBLE("Mic1 Playback Switch", SUN4I_CODEC_DAC_ACTL,
+		   SUN4I_CODEC_DAC_ACTL_MIC1LS, SUN4I_CODEC_DAC_ACTL_MIC1RS,
+		   1, 0),
+	SOC_DOUBLE("Mic2 Playback Switch", SUN4I_CODEC_DAC_ACTL,
+		   SUN4I_CODEC_DAC_ACTL_MIC2LS, SUN4I_CODEC_DAC_ACTL_MIC2RS,
+		   1, 0),
 };
 
 static const struct snd_kcontrol_new sun4i_codec_left_mixer_controls[] = {

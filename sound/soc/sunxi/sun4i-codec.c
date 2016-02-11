@@ -67,6 +67,10 @@
 #define SUN4I_CODEC_DAC_ACTL_LNG			(26)
 #define SUN4I_CODEC_DAC_ACTL_FMG			(23)
 #define SUN4I_CODEC_DAC_ACTL_MICG			(20)
+#define SUN4I_CODEC_DAC_ACTL_LLNS			(19)
+#define SUN4I_CODEC_DAC_ACTL_RLNS			(18)
+#define SUN4I_CODEC_DAC_ACTL_LFMS			(17)
+#define SUN4I_CODEC_DAC_ACTL_RFMS			(16)
 #define SUN4I_CODEC_DAC_ACTL_LDACLMIXS			(15)
 #define SUN4I_CODEC_DAC_ACTL_RDACRMIXS			(14)
 #define SUN4I_CODEC_DAC_ACTL_LDACRMIXS			(13)
@@ -722,6 +726,10 @@ static const struct snd_kcontrol_new sun4i_codec_controls[] = {
 	SOC_SINGLE_TLV("MIC2 Volume", SUN4I_CODEC_ADC_ACTL,
 		       SUN4I_CODEC_ADC_ACTL_PREG2, 0x3, 0,
 		       sun4i_codec_mic_gain_control_scale),
+	SOC_DOUBLE("Line-In Playback Switch", SUN4I_CODEC_DAC_ACTL,
+		   SUN4I_CODEC_DAC_ACTL_LLNS, SUN4I_CODEC_DAC_ACTL_RLNS, 1, 0),
+	SOC_DOUBLE("FM Playback Switch", SUN4I_CODEC_DAC_ACTL,
+		   SUN4I_CODEC_DAC_ACTL_LFMS, SUN4I_CODEC_DAC_ACTL_RFMS, 1, 0),
 };
 
 static const struct snd_kcontrol_new sun4i_codec_left_mixer_controls[] = {

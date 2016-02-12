@@ -325,20 +325,6 @@ static int sun4i_codec_prepare_capture(struct snd_pcm_substream *substream,
 				 0xf << SUN4I_CODEC_ADC_FIFOC_RX_TRIG_LEVEL,
 				 0x7 << SUN4I_CODEC_ADC_FIFOC_RX_TRIG_LEVEL);
 
-	/*
-	 * FIXME: Undocumented in the datasheet, but
-	 *        Allwinner's code mentions that it is related
-	 *        related to microphone gain
-	 */
-	if (of_device_is_compatible(scodec->dev->of_node,
-				    "allwinner,sun4i-a10-codec") ||
-	    of_device_is_compatible(scodec->dev->of_node,
-				    "allwinner,sun7i-a20-codec")) {
-		regmap_update_bits(scodec->regmap, SUN4I_CODEC_ADC_ACTL,
-				   0x3 << 25,
-				   0x1 << 25);
-	}
-
 	if (of_device_is_compatible(scodec->dev->of_node,
 				    "allwinner,sun7i-a20-codec"))
 		/* FIXME: Undocumented bits */

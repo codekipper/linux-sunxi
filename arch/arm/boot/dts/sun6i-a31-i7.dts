@@ -108,10 +108,12 @@
 
 &gmac {
 	pinctrl-names = "default";
-	pinctrl-0 = <&gmac_pins_mii_a>;
+	pinctrl-0 = <&gmac_pins_rgmii_a>;
 	phy = <&phy1>;
-	phy-mode = "mii";
+	phy-mode = "rgmii";
 	phy-supply = <&reg_dldo1>;
+	snps,reset-active-low;
+	snps,reset-delays-us = <0 10000 30000>;
 	status = "okay";
 
 	phy1: ethernet-phy@1 {

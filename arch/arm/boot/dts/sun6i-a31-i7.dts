@@ -73,8 +73,9 @@
 		compatible = "gpio-leds";
 
 		blue {
-			label = "i7:blue:usr";
+			label = "i7:blue:pwr";
 			gpios = <&pio 7 13 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
 		};
 	};
 

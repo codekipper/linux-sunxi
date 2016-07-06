@@ -310,6 +310,26 @@
 				function = "i2c2";
 			};
 
+			i2s0_bclk: i2s0@0 {
+				pins = "PA19";
+				function = "i2s0";
+			};
+
+			i2s0_lrclk: i2s0@1 {
+				pins = "PA18";
+				function = "i2s0";
+			};
+
+			i2s0_sdo0: i2s0@3 {
+				pins = "PA20";
+				function = "i2s0";
+			};
+
+			i2s0_sdi: i2s0@4 {
+				pins = "PA21";
+				function = "i2s0";
+			};
+
 			mmc0_pins_a: mmc0@0 {
 				pins = "PF0", "PF1", "PF2", "PF3",
 				       "PF4", "PF5";

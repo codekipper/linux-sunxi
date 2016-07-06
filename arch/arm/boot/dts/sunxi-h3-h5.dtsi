@@ -411,6 +411,26 @@
 				function = "i2c2";
 			};
 
+			i2s0_bclk_pin: i2s0-bclk-pin {
+				pins = "PA19";
+				function = "i2s0";
+			};
+
+			i2s0_lrclk_pin: i2s0-lrclk-pin {
+				pins = "PA18";
+				function = "i2s0";
+			};
+
+			i2s0_sdo_pin: i2s0-sdo-pin {
+				pins = "PA20";
+				function = "i2s0";
+			};
+
+			i2s0_sdi_pin: i2s0-sdi-pin {
+				pins = "PA21";
+				function = "i2s0";
+			};
+
 			mmc0_pins: mmc0-pins {
 				pins = "PF0", "PF1", "PF2", "PF3",
 				       "PF4", "PF5";

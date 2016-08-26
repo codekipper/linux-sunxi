@@ -75,6 +75,16 @@
 		};
 	};
 
+	panel {
+		compatible = "netron-dy,e231732", "simple-panel";
+
+		port {
+			panel_input: endpoint {
+				remote-endpoint = <&tcon0_out_lcd>;
+			};
+		};
+	};
+
 	sound {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "On-board SPDIF";
@@ -199,6 +209,18 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&spdif_pins_a>;
 	status = "okay";
+};
+
+&tcon0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&lcd0_rgb888_pins>;
+};
+
+&tcon0_out {
+	tcon0_out_lcd: endpoint@0 {
+		reg = <0>;
+		remote-endpoint = <&panel_input>;
+	};
 };
 
 &usb_otg {

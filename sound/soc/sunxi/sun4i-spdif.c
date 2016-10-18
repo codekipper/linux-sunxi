@@ -161,6 +161,12 @@
 #define SUN4I_SPDIF_SAMFREQ_176_4KHZ		0xc
 #define SUN4I_SPDIF_SAMFREQ_192KHZ		0xe
 
+/*
+ * Original sampling frequency can be represented by inverting the value of the
+ * sampling frequency.
+ */
+#define ORIGINAL(v) ((~v) & 0xf)
+
 struct sun4i_spdif_dev {
 	struct platform_device *pdev;
 	struct clk *spdif_clk;
@@ -247,6 +253,7 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 	u32 reg_val;
 	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(cpu_dai);
 	struct platform_device *pdev = host->pdev;
+	int sample_freq, original_sample_freq;
 
 	/* Add the PCM and raw data select interface */
 	switch (params_channels(params)) {
@@ -335,6 +342,94 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 	reg_val |= SUN4I_SPDIF_TXCFG_TXRATIO(mclk_div - 1);
 	regmap_write(host->regmap, SUN4I_SPDIF_TXCFG, reg_val);
 
+	/* Test to see if this fixes playback issue */
+	if (mclk == 24576000) {
+		switch (mclk_div) {
+		/* 24KHZ */
+		case 8:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_24KHZ;
+			original_sample_freq
+				= ORIGINAL(SUN4I_SPDIF_SAMFREQ_24KHZ);
+			break;
+
+		/* 32KHZ */
+		case 6:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_32KHZ;
+			original_sample_freq
+				= ORIGINAL(SUN4I_SPDIF_SAMFREQ_32KHZ);
+			break;
+
+		/* 48KHZ */
+		case 4:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_48KHZ;
+			original_sample_freq
+				= ORIGINAL(SUN4I_SPDIF_SAMFREQ_48KHZ);
+			break;
+
+		/* 96KHZ */
+		case 2:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_96KHZ;
+			original_sample_freq
+				= ORIGINAL(SUN4I_SPDIF_SAMFREQ_96KHZ);
+			break;
+
+		/* 192KHZ */
+		case 1:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_192KHZ;
+			original_sample_freq
+				= ORIGINAL(SUN4I_SPDIF_SAMFREQ_192KHZ);
+			break;
+
+		default:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_NOT_INDICATED;
+			original_sample_freq = 0;
+			break;
+		}
+	} else {
+		/* 22.5792MHz */
+		switch (mclk_div) {
+		/* 22.05KHZ */
+		case 8:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_22_05KHZ;
+			original_sample_freq
+				= ORIGINAL(SUN4I_SPDIF_SAMFREQ_22_05KHZ);
+			break;
+
+		/* 44.1KHZ */
+		case 4:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_44_1KHZ;
+			original_sample_freq
+				= ORIGINAL(SUN4I_SPDIF_SAMFREQ_44_1KHZ);
+			break;
+
+		/* 88.2KHZ */
+		case 2:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_88_2KHZ;
+			original_sample_freq
+				= ORIGINAL(SUN4I_SPDIF_SAMFREQ_88_2KHZ);
+			break;
+
+		/* 176.4KHZ */
+		case 1:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_176_4KHZ;
+			original_sample_freq
+				= ORIGINAL(SUN4I_SPDIF_SAMFREQ_176_4KHZ);
+			break;
+
+		default:
+			sample_freq = SUN4I_SPDIF_SAMFREQ_NOT_INDICATED;
+			original_sample_freq = 0;
+			break;
+		}
+	}
+
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_TXCHSTA0,
+			SUN4I_SPDIF_TXCHSTA0_SAMFREQ_MASK,
+			SUN4I_SPDIF_TXCHSTA0_SAMFREQ(sample_freq));
+
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_TXCHSTA1,
+			SUN4I_SPDIF_TXCHSTA1_ORISAMFREQ_MASK,
+			SUN4I_SPDIF_TXCHSTA1_ORISAMFREQ(original_sample_freq));
 	return 0;
 }
 

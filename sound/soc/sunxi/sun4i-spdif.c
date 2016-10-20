@@ -128,6 +128,7 @@
 	#define SUN4I_SPDIF_TXCHSTA1_ORISAMFREQ(v)	((v) << 4)
 	#define SUN4I_SPDIF_TXCHSTA1_ORISAMFREQ_MASK	GENMASK(7, 4)
 	#define SUN4I_SPDIF_TXCHSTA1_SAMWORDLEN(v)	((v) << 1)
+	#define SUN4I_SPDIF_TXCHSTA1_SAMWORDLEN_MASK	GENMASK(3, 1)
 	#define SUN4I_SPDIF_TXCHSTA1_MAXWORDLEN		BIT(0)
 
 #define SUN4I_SPDIF_RXCHSTA0	(0x34)
@@ -438,6 +439,14 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_TXCHSTA1,
 			SUN4I_SPDIF_TXCHSTA1_ORISAMFREQ_MASK,
 			SUN4I_SPDIF_TXCHSTA1_ORISAMFREQ(original_sample_freq));
+
+	/* Set the channel number in status INVESTIGATION */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_TXCHSTA0,
+			   SUN4I_SPDIF_TXCHSTA0_CHNUM_MASK,
+			   SUN4I_SPDIF_TXCHSTA0_CHNUM(params_channels(params)));
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_TXCHSTA1,
+			   SUN4I_SPDIF_TXCHSTA1_SAMWORDLEN_MASK,
+			   SUN4I_SPDIF_TXCHSTA1_SAMWORDLEN(1));
 	return 0;
 }
 

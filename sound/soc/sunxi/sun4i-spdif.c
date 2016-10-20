@@ -206,6 +206,10 @@ static void sun4i_snd_txctrl_on(struct snd_pcm_substream *substream,
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_INT,
 			   SUN4I_SPDIF_INT_TXDRQEN, SUN4I_SPDIF_INT_TXDRQEN);
 
+	/* MCLK enable */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
+			   SUN4I_SPDIF_CTL_MCLKOUTEN, SUN4I_SPDIF_CTL_MCLKOUTEN);
+
 	/* Global enable */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
 			   SUN4I_SPDIF_CTL_GEN, SUN4I_SPDIF_CTL_GEN);
@@ -221,6 +225,10 @@ static void sun4i_snd_txctrl_off(struct snd_pcm_substream *substream,
 	/* DRQ DISABLE */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_INT,
 			   SUN4I_SPDIF_INT_TXDRQEN, 0);
+
+	/* MCLK disable */
+	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,
+			   SUN4I_SPDIF_CTL_MCLKOUTEN, 0);
 
 	/* Global disable */
 	regmap_update_bits(host->regmap, SUN4I_SPDIF_CTL,

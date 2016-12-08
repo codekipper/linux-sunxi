@@ -926,6 +926,18 @@
 			};
 
 			/omit-if-no-ref/
+			spdif_rx_pins: spdif-rx-pin {
+				pins = "PB12";
+				function = "spdif";
+			};
+
+			/omit-if-no-ref/
+			spdif_mclk_pins: spdif-mclk-pin {
+				pins = "PB03";
+				function = "spdif";
+			};
+
+			/omit-if-no-ref/
 			spi0_pi_pins: spi0-pi-pins {
 				pins = "PI11", "PI12", "PI13";
 				function = "spi0";

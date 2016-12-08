@@ -844,6 +844,36 @@
 			};
 
 			/omit-if-no-ref/
+			i2s0_mclk_pin: i2s0-mclk-pin {
+				pins = "PB5";
+				function = "i2s0";
+			};
+
+			/omit-if-no-ref/
+			i2s0_bclk_pin: i2s0-bclk-pin {
+				pins = "PB6";
+				function = "i2s0";
+			};
+
+			/omit-if-no-ref/
+			i2s0_lrclk_pin: i2s0-lrclk-pin {
+				pins = "PB7";
+				function = "i2s0";
+			};
+
+			/omit-if-no-ref/
+			i2s0_sdo0_pin: i2s0-sdo0-pin {
+				pins = "PB8";
+				function = "i2s0";
+			};
+
+			/omit-if-no-ref/
+			i2s0_sdi_pin: i2s0-sdi-pin {
+				pins = "PB12";
+				function = "i2s0";
+			};
+
+			/omit-if-no-ref/
 			ir0_rx_pin: ir0-rx-pin {
 				pins = "PB4";
 				function = "ir0";

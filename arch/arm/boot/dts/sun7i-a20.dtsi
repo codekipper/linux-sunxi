@@ -1163,6 +1163,31 @@
 				function = "i2c3";
 			};
 
+			i2s0_mclk: i2s0@0 {
+				pins = "PB5";
+				function = "i2s0";
+			};
+
+			i2s0_bclk: i2s0@1 {
+				pins = "PB6";
+				function = "i2s0";
+			};
+
+			i2s0_lrclk: i2s0@2 {
+				pins = "PB7";
+				function = "i2s0";
+			};
+
+			i2s0_sdo0: i2s0@3 {
+				pins = "PB8";
+				function = "i2s0";
+			};
+
+			i2s0_sdi: i2s0@4 {
+				pins = "PB12";
+				function = "i2s0";
+			};
+
 			ir0_rx_pins_a: ir0@0 {
 				pins = "PB4";
 				function = "ir0";

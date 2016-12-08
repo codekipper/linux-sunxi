@@ -610,6 +610,31 @@
 				pins = "PA10", "PA11";
 				function = "uart1";
 			};
+
+			i2s_mclk: i2s0@0 {
+				pins = "PB5";
+				function = "i2s0";
+			};
+
+			i2s_bclk: i2s0@1 {
+				pins = "PB6";
+				function = "i2s0";
+			};
+
+			i2s_lrclk: i2s0@2 {
+				pins = "PB7";
+				function = "i2s0";
+			};
+
+			i2s_sdo0: i2s0@3 {
+				pins = "PB8";
+				function = "i2s0";
+			};
+
+			i2s_sdi: i2s0@4 {
+				pins = "PB12";
+				function = "i2s0";
+			};
 		};
 
 		timer@01c20c00 {

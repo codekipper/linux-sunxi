@@ -50,6 +50,8 @@
 #define SUN4I_I2S_FMT0_FMT_RIGHT_J			(2 << 0)
 #define SUN4I_I2S_FMT0_FMT_LEFT_J			(1 << 0)
 #define SUN4I_I2S_FMT0_FMT_I2S				(0 << 0)
+#define SUN4I_I2S_FMT0_POLARITY_INVERTED		(1)
+#define SUN4I_I2S_FMT0_POLARITY_NORMAL			(0)
 
 #define SUN4I_I2S_FMT1_REG		0x08
 #define SUN4I_I2S_FIFO_TX_REG		0x0c
@@ -72,7 +74,7 @@
 #define SUN4I_I2S_INT_STA_REG		0x20
 
 #define SUN4I_I2S_CLK_DIV_REG		0x24
-#define SUN4I_I2S_CLK_DIV_MCLK_EN		BIT(7)
+#define SUN4I_I2S_CLK_DIV_MCLK_EN		7
 #define SUN4I_I2S_CLK_DIV_BCLK_MASK		GENMASK(6, 4)
 #define SUN4I_I2S_CLK_DIV_BCLK(bclk)			((bclk) << 4)
 #define SUN4I_I2S_CLK_DIV_MCLK_MASK		GENMASK(3, 0)
@@ -82,15 +84,39 @@
 #define SUN4I_I2S_TX_CNT_REG		0x2c
 
 #define SUN4I_I2S_TX_CHAN_SEL_REG	0x30
-#define SUN4I_I2S_TX_CHAN_SEL(num_chan)		(((num_chan) - 1) << 0)
+#define SUN4I_I2S_CHAN_SEL(num_chan)		(((num_chan) - 1) << 0)
 
 #define SUN4I_I2S_TX_CHAN_MAP_REG	0x34
 #define SUN4I_I2S_TX_CHAN_MAP(chan, sample)	((sample) << (chan << 2))
+#define SUN4I_I2S_TX_CHAN_EN(num_chan)		(((1 << num_chan) - 1))
 
 #define SUN4I_I2S_RX_CHAN_SEL_REG	0x38
 #define SUN4I_I2S_RX_CHAN_MAP_REG	0x3c
 
+struct sun4i_i2s_quirks {
+	bool				has_reset;
+	bool				has_master_slave_sel;
+	unsigned int			reg_offset_txdata;	/* TX FIFO */
+	unsigned int			reg_offset_txchanmap;
+	unsigned int			reg_offset_rxchanmap;
+	const struct regmap_config	*sun4i_i2s_regmap;
+	unsigned int			mclk_adjust;
+	unsigned int			bclk_adjust;
+	unsigned int			fmt_adjust;
+
+	/* Register fields for i2s */
+	struct reg_field		field_clkdiv_mclk_en;
+	struct reg_field		field_fmt_set_wss;
+	struct reg_field		field_fmt_set_sr;
+	struct reg_field		field_fmt_set_bclk_polarity;
+	struct reg_field		field_fmt_set_lrclk_polarity;
+	struct reg_field		field_fmt_set_mode;
+	struct reg_field		field_txchansel;
+	struct reg_field		field_rxchansel;
+};
+
 struct sun4i_i2s {
+	struct device	*dev;
 	struct clk	*bus_clk;
 	struct clk	*mod_clk;
 	struct regmap	*regmap;
@@ -100,6 +126,18 @@ struct sun4i_i2s {
 
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
+
+	/* Register fields for i2s */
+	struct regmap_field	*field_clkdiv_mclk_en;
+	struct regmap_field	*field_fmt_set_wss;
+	struct regmap_field	*field_fmt_set_sr;
+	struct regmap_field	*field_fmt_set_bclk_polarity;
+	struct regmap_field	*field_fmt_set_lrclk_polarity;
+	struct regmap_field	*field_fmt_set_mode;
+	struct regmap_field	*field_txchansel;
+	struct regmap_field	*field_rxchansel;
+
+	const struct sun4i_i2s_quirks	*variant;
 };
 
 struct sun4i_i2s_clk_div {
@@ -138,7 +176,7 @@ static int sun4i_i2s_get_bclk_div(struct sun4i_i2s *i2s,
 		const struct sun4i_i2s_clk_div *bdiv = &sun4i_i2s_bclk_div[i];
 
 		if (bdiv->div == div)
-			return bdiv->val;
+			return bdiv->val + i2s->variant->bclk_adjust;
 	}
 
 	return -EINVAL;
@@ -156,7 +194,7 @@ static int sun4i_i2s_get_mclk_div(struct sun4i_i2s *i2s,
 		const struct sun4i_i2s_clk_div *mdiv = &sun4i_i2s_mclk_div[i];
 
 		if (mdiv->div == div)
-			return mdiv->val;
+			return mdiv->val + i2s->variant->mclk_adjust;
 	}
 
 	return -EINVAL;
@@ -228,8 +266,9 @@ static int sun4i_i2s_set_clk_rate(struct sun4i_i2s *i2s,
 
 	regmap_write(i2s->regmap, SUN4I_I2S_CLK_DIV_REG,
 		     SUN4I_I2S_CLK_DIV_BCLK(bclk_div) |
-		     SUN4I_I2S_CLK_DIV_MCLK(mclk_div) |
-		     SUN4I_I2S_CLK_DIV_MCLK_EN);
+		     SUN4I_I2S_CLK_DIV_MCLK(mclk_div));
+
+	regmap_field_write(i2s->field_clkdiv_mclk_en, 1);
 
 	return 0;
 }
@@ -244,6 +283,22 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	if (params_channels(params) != 2)
 		return -EINVAL;
+
+	/* Map the channels for playback */
+	regmap_write(i2s->regmap, i2s->variant->reg_offset_txchanmap,
+		     0x76543210);
+
+	/* Map the channels for capture */
+	regmap_write(i2s->regmap, i2s->variant->reg_offset_rxchanmap,
+		     0x00003210);
+
+	/* Configure the channels */
+	regmap_field_write(i2s->field_txchansel,
+			   SUN4I_I2S_CHAN_SEL(params_channels(params)));
+
+	regmap_field_write(i2s->field_rxchansel,
+			   SUN4I_I2S_CHAN_SEL(params_channels(params)));
+
 
 	switch (params_physical_width(params)) {
 	case 16:
@@ -264,9 +319,10 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 		return -EINVAL;
 	}
 
-	regmap_update_bits(i2s->regmap, SUN4I_I2S_FMT0_REG,
-			   SUN4I_I2S_FMT0_WSS_MASK | SUN4I_I2S_FMT0_SR_MASK,
-			   SUN4I_I2S_FMT0_WSS(wss) | SUN4I_I2S_FMT0_SR(sr));
+	regmap_field_write(i2s->field_fmt_set_wss,
+			   wss + i2s->variant->fmt_adjust);
+	regmap_field_write(i2s->field_fmt_set_sr,
+			   sr + i2s->variant->fmt_adjust);
 
 	return sun4i_i2s_set_clk_rate(i2s, params_rate(params),
 				      params_width(params));
@@ -276,6 +332,8 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 {
 	struct sun4i_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 	u32 val;
+	u32 bclk_polarity = SUN4I_I2S_FMT0_POLARITY_NORMAL;
+	u32 lrclk_polarity = SUN4I_I2S_FMT0_POLARITY_NORMAL;
 
 	/* DAI Mode */
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -292,58 +350,50 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		return -EINVAL;
 	}
 
-	regmap_update_bits(i2s->regmap, SUN4I_I2S_FMT0_REG,
-			   SUN4I_I2S_FMT0_FMT_MASK,
-			   val);
+	regmap_field_write(i2s->field_fmt_set_mode, val);
 
 	/* DAI clock polarity */
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
 	case SND_SOC_DAIFMT_IB_IF:
 		/* Invert both clocks */
-		val = SUN4I_I2S_FMT0_BCLK_POLARITY_INVERTED |
-			SUN4I_I2S_FMT0_LRCLK_POLARITY_INVERTED;
+		bclk_polarity = SUN4I_I2S_FMT0_POLARITY_INVERTED;
+		lrclk_polarity = SUN4I_I2S_FMT0_POLARITY_INVERTED;
 		break;
 	case SND_SOC_DAIFMT_IB_NF:
 		/* Invert bit clock */
-		val = SUN4I_I2S_FMT0_BCLK_POLARITY_INVERTED |
-			SUN4I_I2S_FMT0_LRCLK_POLARITY_NORMAL;
+		bclk_polarity = SUN4I_I2S_FMT0_POLARITY_INVERTED;
 		break;
 	case SND_SOC_DAIFMT_NB_IF:
 		/* Invert frame clock */
-		val = SUN4I_I2S_FMT0_LRCLK_POLARITY_INVERTED |
-			SUN4I_I2S_FMT0_BCLK_POLARITY_NORMAL;
+		lrclk_polarity = SUN4I_I2S_FMT0_POLARITY_INVERTED;
 		break;
 	case SND_SOC_DAIFMT_NB_NF:
-		/* Nothing to do for both normal cases */
-		val = SUN4I_I2S_FMT0_BCLK_POLARITY_NORMAL |
-			SUN4I_I2S_FMT0_LRCLK_POLARITY_NORMAL;
 		break;
 	default:
 		return -EINVAL;
 	}
 
-	regmap_update_bits(i2s->regmap, SUN4I_I2S_FMT0_REG,
-			   SUN4I_I2S_FMT0_BCLK_POLARITY_MASK |
-			   SUN4I_I2S_FMT0_LRCLK_POLARITY_MASK,
-			   val);
+	regmap_field_write(i2s->field_fmt_set_bclk_polarity, bclk_polarity);
+	regmap_field_write(i2s->field_fmt_set_lrclk_polarity, lrclk_polarity);
 
-	/* DAI clock master masks */
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:
-		/* BCLK and LRCLK master */
-		val = SUN4I_I2S_CTRL_MODE_MASTER;
-		break;
-	case SND_SOC_DAIFMT_CBM_CFM:
-		/* BCLK and LRCLK slave */
-		val = SUN4I_I2S_CTRL_MODE_SLAVE;
-		break;
-	default:
-		return -EINVAL;
+	if (i2s->variant->has_master_slave_sel) {
+		/* DAI clock master masks */
+		switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+		case SND_SOC_DAIFMT_CBS_CFS:
+			/* BCLK and LRCLK master */
+			val = SUN4I_I2S_CTRL_MODE_MASTER;
+			break;
+		case SND_SOC_DAIFMT_CBM_CFM:
+			/* BCLK and LRCLK slave */
+			val = SUN4I_I2S_CTRL_MODE_SLAVE;
+			break;
+		default:
+			return -EINVAL;
+		}
+		regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
+				   SUN4I_I2S_CTRL_MODE_MASK,
+				   val);
 	}
-
-	regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
-			   SUN4I_I2S_CTRL_MODE_MASK,
-			   val);
 
 	/* Set significant bits in our FIFOs */
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_FIFO_CTRL_REG,
@@ -351,6 +401,7 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			   SUN4I_I2S_FIFO_CTRL_RX_MODE_MASK,
 			   SUN4I_I2S_FIFO_CTRL_TX_MODE(1) |
 			   SUN4I_I2S_FIFO_CTRL_RX_MODE(1));
+
 	return 0;
 }
 
@@ -457,23 +508,24 @@ static int sun4i_i2s_startup(struct snd_pcm_substream *substream,
 			     struct snd_soc_dai *dai)
 {
 	struct sun4i_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct device *dev = rtd->card->dev;
+	int ret = 0;
 
 	/* Enable the whole hardware block */
-	regmap_write(i2s->regmap, SUN4I_I2S_CTRL_REG,
-		     SUN4I_I2S_CTRL_GL_EN);
+	regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
+			   SUN4I_I2S_CTRL_GL_EN, SUN4I_I2S_CTRL_GL_EN);
 
 	/* Enable the first output line */
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
 			   SUN4I_I2S_CTRL_SDO_EN_MASK,
 			   SUN4I_I2S_CTRL_SDO_EN(0));
 
-	/* Enable the first two channels */
-	regmap_write(i2s->regmap, SUN4I_I2S_TX_CHAN_SEL_REG,
-		     SUN4I_I2S_TX_CHAN_SEL(2));
-
-	/* Map them to the two first samples coming in */
-	regmap_write(i2s->regmap, SUN4I_I2S_TX_CHAN_MAP_REG,
-		     SUN4I_I2S_TX_CHAN_MAP(0, 0) | SUN4I_I2S_TX_CHAN_MAP(1, 1));
+	ret = snd_soc_dai_set_fmt(rtd->cpu_dai, rtd->dai_link->dai_fmt);
+	if (ret < 0) {
+		dev_err(dev, "can't set cpu_dai set fmt: %d\n", ret);
+		return ret;
+	}
 
 	return clk_prepare_enable(i2s->mod_clk);
 }
@@ -490,7 +542,8 @@ static void sun4i_i2s_shutdown(struct snd_pcm_substream *substream,
 			   SUN4I_I2S_CTRL_SDO_EN_MASK, 0);
 
 	/* Disable the whole hardware block */
-	regmap_write(i2s->regmap, SUN4I_I2S_CTRL_REG, 0);
+	regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
+			   SUN4I_I2S_CTRL_GL_EN, 0);
 }
 
 static int sun4i_i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id,
@@ -654,22 +707,100 @@ static int sun4i_i2s_runtime_suspend(struct device *dev)
 	return 0;
 }
 
-struct sun4i_i2s_quirks {
-	bool has_reset;
-};
-
 static const struct sun4i_i2s_quirks sun4i_a10_i2s_quirks = {
-	.has_reset	= false,
+	.has_reset		= false,
+	.reg_offset_txdata	= SUN4I_I2S_FIFO_TX_REG,
+	.reg_offset_txchanmap	= SUN4I_I2S_TX_CHAN_MAP_REG,
+	.reg_offset_rxchanmap	= SUN4I_I2S_RX_CHAN_MAP_REG,
+	.sun4i_i2s_regmap	= &sun4i_i2s_regmap_config,
+	.has_master_slave_sel	= true,
+	.field_clkdiv_mclk_en	= REG_FIELD(SUN4I_I2S_CLK_DIV_REG,
+					    SUN4I_I2S_CLK_DIV_MCLK_EN,
+					    SUN4I_I2S_CLK_DIV_MCLK_EN),
+	.field_fmt_set_wss	= REG_FIELD(SUN4I_I2S_FMT0_REG, 2, 3),
+	.field_fmt_set_sr	= REG_FIELD(SUN4I_I2S_FMT0_REG, 4, 5),
+	.field_fmt_set_bclk_polarity = REG_FIELD(SUN4I_I2S_FMT0_REG, 6, 6),
+	.field_fmt_set_lrclk_polarity = REG_FIELD(SUN4I_I2S_FMT0_REG, 7, 7),
+	.field_fmt_set_mode	= REG_FIELD(SUN4I_I2S_FMT0_REG, 0, 1),
+	.field_txchansel	= REG_FIELD(SUN4I_I2S_TX_CHAN_SEL_REG, 0, 2),
+	.field_rxchansel	= REG_FIELD(SUN4I_I2S_RX_CHAN_SEL_REG, 0, 2),
 };
 
 static const struct sun4i_i2s_quirks sun6i_a31_i2s_quirks = {
-	.has_reset	= true,
+	.has_reset		= true,
+	.reg_offset_txdata	= SUN4I_I2S_FIFO_TX_REG,
+	.reg_offset_txchanmap	= SUN4I_I2S_TX_CHAN_MAP_REG,
+	.reg_offset_rxchanmap	= SUN4I_I2S_RX_CHAN_MAP_REG,
+	.sun4i_i2s_regmap	= &sun4i_i2s_regmap_config,
+	.has_master_slave_sel	= true,
+	.field_clkdiv_mclk_en	= REG_FIELD(SUN4I_I2S_CLK_DIV_REG,
+					    SUN4I_I2S_CLK_DIV_MCLK_EN,
+					    SUN4I_I2S_CLK_DIV_MCLK_EN),
+	.field_fmt_set_wss	= REG_FIELD(SUN4I_I2S_FMT0_REG, 2, 3),
+	.field_fmt_set_sr	= REG_FIELD(SUN4I_I2S_FMT0_REG, 4, 5),
+	.field_fmt_set_bclk_polarity = REG_FIELD(SUN4I_I2S_FMT0_REG, 6, 6),
+	.field_fmt_set_lrclk_polarity = REG_FIELD(SUN4I_I2S_FMT0_REG, 7, 7),
+	.field_fmt_set_mode	= REG_FIELD(SUN4I_I2S_FMT0_REG, 0, 1),
+	.field_txchansel	= REG_FIELD(SUN4I_I2S_TX_CHAN_SEL_REG, 0, 2),
+	.field_rxchansel	= REG_FIELD(SUN4I_I2S_RX_CHAN_SEL_REG, 0, 2),
 };
+
+static int sun4i_i2s_init_regmap_fields(struct sun4i_i2s *i2s)
+{
+	i2s->field_fmt_set_wss =
+		devm_regmap_field_alloc(i2s->dev, i2s->regmap,
+					i2s->variant->field_fmt_set_wss);
+	if (IS_ERR(i2s->field_fmt_set_wss))
+		return PTR_ERR(i2s->field_fmt_set_wss);
+
+	i2s->field_fmt_set_sr =
+		devm_regmap_field_alloc(i2s->dev, i2s->regmap,
+					i2s->variant->field_fmt_set_sr);
+	if (IS_ERR(i2s->field_fmt_set_sr))
+		return PTR_ERR(i2s->field_fmt_set_sr);
+
+	i2s->field_fmt_set_bclk_polarity =
+		devm_regmap_field_alloc(i2s->dev, i2s->regmap,
+					i2s->variant->field_fmt_set_bclk_polarity);
+	if (IS_ERR(i2s->field_fmt_set_bclk_polarity))
+		return PTR_ERR(i2s->field_fmt_set_bclk_polarity);
+
+	i2s->field_fmt_set_lrclk_polarity =
+		devm_regmap_field_alloc(i2s->dev, i2s->regmap,
+					i2s->variant->field_fmt_set_lrclk_polarity);
+	if (IS_ERR(i2s->field_fmt_set_lrclk_polarity))
+		return PTR_ERR(i2s->field_fmt_set_lrclk_polarity);
+
+	i2s->field_fmt_set_mode =
+		devm_regmap_field_alloc(i2s->dev, i2s->regmap,
+					i2s->variant->field_fmt_set_mode);
+	if (IS_ERR(i2s->field_fmt_set_mode))
+		return PTR_ERR(i2s->field_fmt_set_mode);
+
+	i2s->field_clkdiv_mclk_en =
+		devm_regmap_field_alloc(i2s->dev, i2s->regmap,
+					i2s->variant->field_clkdiv_mclk_en);
+	if (IS_ERR(i2s->field_clkdiv_mclk_en))
+		return PTR_ERR(i2s->field_clkdiv_mclk_en);
+
+	i2s->field_txchansel =
+		devm_regmap_field_alloc(i2s->dev, i2s->regmap,
+					i2s->variant->field_txchansel);
+	if (IS_ERR(i2s->field_txchansel))
+		return PTR_ERR(i2s->field_txchansel);
+
+	i2s->field_rxchansel =
+		devm_regmap_field_alloc(i2s->dev, i2s->regmap,
+					i2s->variant->field_rxchansel);
+	if (IS_ERR(i2s->field_rxchansel))
+		return PTR_ERR(i2s->field_rxchansel);
+
+	return 0;
+}
 
 static int sun4i_i2s_probe(struct platform_device *pdev)
 {
 	struct sun4i_i2s *i2s;
-	const struct sun4i_i2s_quirks *quirks;
 	struct resource *res;
 	void __iomem *regs;
 	int irq, ret;
@@ -678,6 +809,7 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	if (!i2s)
 		return -ENOMEM;
 	platform_set_drvdata(pdev, i2s);
+	i2s->dev = &pdev->dev;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(&pdev->dev, res);
@@ -690,8 +822,8 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 		return irq;
 	}
 
-	quirks = of_device_get_match_data(&pdev->dev);
-	if (!quirks) {
+	i2s->variant = of_device_get_match_data(&pdev->dev);
+	if (!i2s->variant) {
 		dev_err(&pdev->dev, "Failed to determine the quirks to use\n");
 		return -ENODEV;
 	}
@@ -703,7 +835,7 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	}
 
 	i2s->regmap = devm_regmap_init_mmio(&pdev->dev, regs,
-					    &sun4i_i2s_regmap_config);
+					    i2s->variant->sun4i_i2s_regmap);
 	if (IS_ERR(i2s->regmap)) {
 		dev_err(&pdev->dev, "Regmap initialisation failed\n");
 		return PTR_ERR(i2s->regmap);
@@ -715,7 +847,7 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 		return PTR_ERR(i2s->mod_clk);
 	}
 
-	if (quirks->has_reset) {
+	if (i2s->variant->has_reset) {
 		i2s->rst = devm_reset_control_get_exclusive(&pdev->dev, NULL);
 		if (IS_ERR(i2s->rst)) {
 			dev_err(&pdev->dev, "Failed to get reset control\n");
@@ -732,7 +864,8 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 		}
 	}
 
-	i2s->playback_dma_data.addr = res->start + SUN4I_I2S_FIFO_TX_REG;
+	i2s->playback_dma_data.addr = res->start +
+					i2s->variant->reg_offset_txdata;
 	i2s->playback_dma_data.maxburst = 8;
 
 	i2s->capture_dma_data.addr = res->start + SUN4I_I2S_FIFO_RX_REG;
@@ -756,6 +889,12 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	ret = snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
 	if (ret) {
 		dev_err(&pdev->dev, "Could not register PCM\n");
+		goto err_suspend;
+	}
+
+	ret = sun4i_i2s_init_regmap_fields(i2s);
+	if (ret) {
+		dev_err(&pdev->dev, "Could not initialise regmap fields\n");
 		goto err_suspend;
 	}
 

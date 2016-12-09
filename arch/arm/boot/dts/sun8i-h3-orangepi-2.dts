@@ -108,6 +108,34 @@
 		};
 	};
 
+	sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,routing =
+			"Headphone Jack", "VOUTLHP",
+			"Headphone Jack", "VOUTRHP",
+			"Line Out Jack", "VOUTL",
+			"Line Out Jack", "VOUTR",
+			"VINM", "Mic Jack",
+			"VINL", "Line In Jack",
+			"VINR", "Line In Jack";
+		simple-audio-card,widgets =
+			"Headphone", "Headphone Jack",
+			"Line", "Line In Jack",
+			"Line", "Line Out Jack",
+			"Microphone", "Mic Jack";
+
+		simple-audio-card,mclk-fs = <256>;
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&ext_codec>;
+		};
+	};
+
 	wifi_pwrseq: wifi_pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		pinctrl-names = "default";
@@ -153,6 +181,32 @@
 	hdmi_out_con: endpoint {
 		remote-endpoint = <&hdmi_con_in>;
 	};
+};
+
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	status = "okay";
+
+	/* added for test with I2S waveshare codec board based on UDA1380 */
+	ext_codec: uda1380@18 {
+		#sound-dai-cells = <0>; /* added for dmesg err: "could not get #sound-dai-cells for " */
+		compatible = "nxp,uda1380";
+		reg = <0x18>;
+		/* reset-gpio = <&pio 7 3 GPIO_ACTIVE_HIGH>; */
+		/*
+		 * commented out so uda1380_probe move forward..
+		 * otherwise get: asoc-simple-card sound: ASoC: failed to instantiate card -16
+		 * power-gpio = <&pio 7 11 GPIO_ACTIVE_HIGH>;
+		 */
+		dac-clk = <1>; // SYSCLK=0, WSPLL=1
+	};
+};
+
+&i2s0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2s0_bclk> , <&i2s0_lrclk> , <&i2s0_sdo0>;
+	status = "okay";
 };
 
 &i2s2 {

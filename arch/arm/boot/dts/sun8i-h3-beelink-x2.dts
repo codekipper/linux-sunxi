@@ -87,6 +87,15 @@
 		};
 	};
 
+	gpio_keys {
+		compatible = "gpio-keys";
+
+		sw4 {
+			label = "power";
+			gpios = <&r_pio 0 3 GPIO_ACTIVE_LOW>;
+		};
+	};
+
 	wifi_pwrseq: wifi_pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		reset-gpios = <&r_pio 0 7 GPIO_ACTIVE_LOW>; /* PL7 */

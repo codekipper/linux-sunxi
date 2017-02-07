@@ -470,7 +470,7 @@
 		codec: codec@01c22e00 {
 			#sound-dai-cells = <0>;
 			compatible = "allwinner,sun8i-a33-codec";
-			reg = <0x01c22e00 0x400>;
+			reg = <0x01c22e00 0x600>;
 			interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_BUS_CODEC>, <&ccu CLK_AC_DIG>;
 			clock-names = "bus", "mod";
@@ -623,7 +623,7 @@
 		};
 
 		codec_analog: codec-analog@01f015c0 {
-			compatible = "allwinner,sun8i-h3-codec-analog";
+			compatible = "allwinner,sun50i-a64-codec-analog";
 			reg = <0x01f015c0 0x4>;
 		};
 

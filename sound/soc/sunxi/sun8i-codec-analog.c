@@ -30,6 +30,7 @@
 /* Codec analog control register offsets and bit fields */
 #define SUN8I_ADDA_HP_VOLC		0x00
 #define SUN8I_ADDA_HP_VOLC_PA_CLK_GATE		7
+#define SUN50I_ADDA_HP_VOLC_HPPAEN		6
 #define SUN8I_ADDA_HP_VOLC_HP_VOL		0
 #define SUN8I_ADDA_LOMIXSC		0x01
 #define SUN8I_ADDA_LOMIXSC_MIC1			6
@@ -48,6 +49,7 @@
 #define SUN8I_ADDA_ROMIXSC_DACR			1
 #define SUN8I_ADDA_ROMIXSC_DACL			0
 #define SUN8I_ADDA_DAC_PA_SRC		0x03
+#define SUN50I_ADDA_DAC_PA_SRC		0x07
 #define SUN8I_ADDA_DAC_PA_SRC_DACAREN		7
 #define SUN8I_ADDA_DAC_PA_SRC_DACALEN		6
 #define SUN8I_ADDA_DAC_PA_SRC_RMIXEN		5
@@ -397,13 +399,24 @@ static const struct snd_soc_dapm_route sun8i_codec_mixer_routes[] = {
 
 /* headphone specific controls, widgets, and routes */
 static const DECLARE_TLV_DB_SCALE(sun8i_codec_hp_vol_scale, -6300, 100, 1);
-static const struct snd_kcontrol_new sun8i_codec_headphone_controls[] = {
+static const struct snd_kcontrol_new sun8i_a23_codec_headphone_controls[] = {
 	SOC_SINGLE_TLV("Headphone Playback Volume",
 		       SUN8I_ADDA_HP_VOLC,
 		       SUN8I_ADDA_HP_VOLC_HP_VOL, 0x3f, 0,
 		       sun8i_codec_hp_vol_scale),
 	SOC_DOUBLE("Headphone Playback Switch",
 		   SUN8I_ADDA_DAC_PA_SRC,
+		   SUN8I_ADDA_DAC_PA_SRC_LHPPAMUTE,
+		   SUN8I_ADDA_DAC_PA_SRC_RHPPAMUTE, 1, 0),
+};
+
+static const struct snd_kcontrol_new sun50i_a64_codec_headphone_controls[] = {
+	SOC_SINGLE_TLV("Headphone Playback Volume",
+		       SUN8I_ADDA_HP_VOLC,
+		       SUN8I_ADDA_HP_VOLC_HP_VOL, 0x3f, 0,
+		       sun8i_codec_hp_vol_scale),
+	SOC_DOUBLE("Headphone Playback Switch",
+		   SUN50I_ADDA_DAC_PA_SRC,
 		   SUN8I_ADDA_DAC_PA_SRC_LHPPAMUTE,
 		   SUN8I_ADDA_DAC_PA_SRC_RHPPAMUTE, 1, 0),
 };
@@ -447,7 +460,31 @@ static int sun8i_headphone_amp_event(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-static const struct snd_soc_dapm_widget sun8i_codec_headphone_widgets[] = {
+static int sun50i_headphone_amp_event(struct snd_soc_dapm_widget *w,
+				     struct snd_kcontrol *k, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+
+	if (SND_SOC_DAPM_EVENT_ON(event)) {
+		snd_soc_component_update_bits(component, SUN8I_ADDA_HP_VOLC,
+					      BIT(SUN50I_ADDA_HP_VOLC_HPPAEN),
+					      BIT(SUN50I_ADDA_HP_VOLC_HPPAEN));
+		/*
+		 * Need a delay to have the amplifier up. 700ms seems the best
+		 * compromise between the time to let the amplifier up and the
+		 * time not to feel this delay while playing a sound.
+		 */
+		msleep(700);
+	} else if (SND_SOC_DAPM_EVENT_OFF(event)) {
+		snd_soc_component_update_bits(component, SUN8I_ADDA_HP_VOLC,
+					      BIT(SUN50I_ADDA_HP_VOLC_HPPAEN),
+					      0x0);
+	}
+
+	return 0;
+}
+
+static const struct snd_soc_dapm_widget sun8i_a23_codec_headphone_widgets[] = {
 	SND_SOC_DAPM_MUX("Headphone Source Playback Route",
 			 SND_SOC_NOPM, 0, 0, sun8i_codec_hp_src),
 	SND_SOC_DAPM_OUT_DRV_E("Headphone Amp", SUN8I_ADDA_PAEN_HP_CTRL,
@@ -461,6 +498,16 @@ static const struct snd_soc_dapm_widget sun8i_codec_headphone_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("HP"),
 };
 
+static const struct snd_soc_dapm_widget sun50i_a64_codec_headphone_widgets[] = {
+	SND_SOC_DAPM_MUX("Headphone Source Playback Route",
+			 SND_SOC_NOPM, 0, 0, sun8i_codec_hp_src),
+	SND_SOC_DAPM_OUT_DRV_E("Headphone Amp", SUN8I_ADDA_HP_VOLC,
+			       SUN50I_ADDA_HP_VOLC_HPPAEN, 0, NULL, 0,
+			       sun50i_headphone_amp_event,
+			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_PRE_PMD),
+	SND_SOC_DAPM_OUTPUT("HP"),
+};
+
 static const struct snd_soc_dapm_route sun8i_codec_headphone_routes[] = {
 	{ "Headphone Source Playback Route", "DAC", "Left DAC" },
 	{ "Headphone Source Playback Route", "DAC", "Right DAC" },
@@ -471,22 +518,32 @@ static const struct snd_soc_dapm_route sun8i_codec_headphone_routes[] = {
 	{ "HP", NULL, "Headphone Amp" },
 };
 
-static int sun8i_codec_add_headphone(struct snd_soc_component *cmpnt)
+static const struct snd_soc_dapm_route sun50i_codec_headphone_routes[] = {
+	{ "Headphone Source Playback Route", "DAC", "Left DAC" },
+	{ "Headphone Source Playback Route", "DAC", "Right DAC" },
+	{ "Headphone Source Playback Route", "Mixer", "Left Mixer" },
+	{ "Headphone Source Playback Route", "Mixer", "Right Mixer" },
+	{ "Headphone Amp", NULL, "Headphone Source Playback Route" },
+	{ "HP", NULL, "Headphone Amp" },
+};
+
+static int sun8i_a23_codec_add_headphone(struct snd_soc_component *cmpnt)
 {
 	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
 	struct device *dev = cmpnt->dev;
 	int ret;
 
 	ret = snd_soc_add_component_controls(cmpnt,
-					     sun8i_codec_headphone_controls,
-					     ARRAY_SIZE(sun8i_codec_headphone_controls));
+					     sun8i_a23_codec_headphone_controls,
+					     ARRAY_SIZE(sun8i_a23_codec_headphone_controls));
 	if (ret) {
 		dev_err(dev, "Failed to add Headphone controls: %d\n", ret);
 		return ret;
 	}
 
-	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_headphone_widgets,
-					ARRAY_SIZE(sun8i_codec_headphone_widgets));
+	ret = snd_soc_dapm_new_controls(dapm,
+					sun8i_a23_codec_headphone_widgets,
+					ARRAY_SIZE(sun8i_a23_codec_headphone_widgets));
 	if (ret) {
 		dev_err(dev, "Failed to add Headphone DAPM widgets: %d\n", ret);
 		return ret;
@@ -521,6 +578,38 @@ static int sun8i_codec_add_mbias(struct snd_soc_component *cmpnt)
 		dev_err(dev, "Failed to add MBIAS DAPM widgets: %d\n", ret);
 
 	return ret;
+}
+
+static int sun50i_a64_codec_add_headphone(struct snd_soc_component *cmpnt)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
+	struct device *dev = cmpnt->dev;
+	int ret;
+
+	ret = snd_soc_add_component_controls(cmpnt,
+					     sun50i_a64_codec_headphone_controls,
+					     ARRAY_SIZE(sun50i_a64_codec_headphone_controls));
+	if (ret) {
+		dev_err(dev, "Failed to add Headphone controls: %d\n", ret);
+		return ret;
+	}
+
+	ret = snd_soc_dapm_new_controls(dapm,
+					sun50i_a64_codec_headphone_widgets,
+					ARRAY_SIZE(sun50i_a64_codec_headphone_widgets));
+	if (ret) {
+		dev_err(dev, "Failed to add Headphone DAPM widgets: %d\n", ret);
+		return ret;
+	}
+
+	ret = snd_soc_dapm_add_routes(dapm, sun50i_codec_headphone_routes,
+				      ARRAY_SIZE(sun50i_codec_headphone_routes));
+	if (ret) {
+		dev_err(dev, "Failed to add Headphone DAPM routes: %d\n", ret);
+		return ret;
+	}
+
+	return 0;
 }
 
 /* hmic specific widget */
@@ -751,6 +840,7 @@ struct sun8i_codec_analog_quirks {
 	bool has_lineout;
 	bool has_mbias;
 	bool has_mic2;
+	int (*add_headphone)(struct snd_soc_component *cmpnt);
 };
 
 static const struct sun8i_codec_analog_quirks sun8i_a23_quirks = {
@@ -759,6 +849,7 @@ static const struct sun8i_codec_analog_quirks sun8i_a23_quirks = {
 	.has_linein	= true,
 	.has_mbias	= true,
 	.has_mic2	= true,
+	.add_headphone	= sun8i_a23_codec_add_headphone,
 };
 
 static const struct sun8i_codec_analog_quirks sun8i_h3_quirks = {
@@ -815,6 +906,13 @@ static const struct sun8i_codec_analog_quirks sun8i_v3s_quirks = {
 	.has_hmic	= true,
 };
 
+static const struct sun8i_codec_analog_quirks sun50i_a64_quirks = {
+	.has_headphone	= true,
+	.has_hmic	= false,
+	.has_lineout	= false, /* is true but I'm lazy */
+	.add_headphone	= sun50i_a64_codec_add_headphone,
+};
+
 static int sun8i_codec_analog_cmpnt_probe(struct snd_soc_component *cmpnt)
 {
 	struct device *dev = cmpnt->dev;
@@ -834,7 +932,7 @@ static int sun8i_codec_analog_cmpnt_probe(struct snd_soc_component *cmpnt)
 		return ret;
 
 	if (quirks->has_headphone) {
-		ret = sun8i_codec_add_headphone(cmpnt);
+		ret = quirks->add_headphone(cmpnt);
 		if (ret)
 			return ret;
 	}
@@ -894,6 +992,10 @@ static const struct of_device_id sun8i_codec_analog_of_match[] = {
 	{
 		.compatible = "allwinner,sun8i-v3s-codec-analog",
 		.data = &sun8i_v3s_quirks,
+	},
+	{
+		.compatible = "allwinner,sun50i-a64-codec-analog",
+		.data = &sun50i_a64_quirks,
 	},
 	{}
 };

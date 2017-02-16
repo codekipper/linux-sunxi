@@ -501,10 +501,8 @@ static const struct snd_soc_dapm_widget sun8i_a23_codec_headphone_widgets[] = {
 static const struct snd_soc_dapm_widget sun50i_a64_codec_headphone_widgets[] = {
 	SND_SOC_DAPM_MUX("Headphone Source Playback Route",
 			 SND_SOC_NOPM, 0, 0, sun8i_codec_hp_src),
-	SND_SOC_DAPM_OUT_DRV_E("Headphone Amp", SUN8I_ADDA_HP_VOLC,
-			       SUN50I_ADDA_HP_VOLC_HPPAEN, 0, NULL, 0,
-			       sun50i_headphone_amp_event,
-			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_PRE_PMD),
+	SND_SOC_DAPM_OUT_DRV("Headphone Amp", SUN8I_ADDA_HP_VOLC,
+			     SUN50I_ADDA_HP_VOLC_HPPAEN, 0, NULL, 0),
 	SND_SOC_DAPM_OUTPUT("HP"),
 };
 
@@ -586,6 +584,7 @@ static int sun50i_a64_codec_add_headphone(struct snd_soc_component *cmpnt)
 	struct device *dev = cmpnt->dev;
 	int ret;
 
+	dev_err(dev, "COOPS: %s\n", __func__);
 	ret = snd_soc_add_component_controls(cmpnt,
 					     sun50i_a64_codec_headphone_controls,
 					     ARRAY_SIZE(sun50i_a64_codec_headphone_controls));

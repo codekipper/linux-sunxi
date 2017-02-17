@@ -1,0 +1,52 @@
+BRANCHING STRATEGY FOR SUNXI DEVELOPMENT
+========================================
+
+Always try to rebase upstream to linux-next.
+
+If a delivery requires a specific branch then add the remote to this list
+and add it as a temp branch.
+
+SUNXI-WIP - development branch for everything
+|\
+| SUNXI-WIP-A64 - development branch for a64 incase SUNXI-WIP doesn't work
+|/
+PATCHES READY FOR DELIVERY BUT REQUIRING 3RD PARTY DELIVERIES TO ME MERGED
+(including an updated version of this document)
+|
+3RD PARTY PATCHES (See note)
+|
+UPSTREAM - Patches ready for pushing (always rebase first)
+|
+LINUX-NEXT
+
+THIRD PARTY PATCHES
+===================
+
+The patches below this point come from elsewhere, some as destined
+for mainline whereas others are hacks. Here you will find some
+notes on from where these patches come from. They may not be the
+latest.
+
+sun8i H3 emacs: git://github.com/montjoie/linux.git branch sun8i-emac-wip-v5
+sun50i emacs: git://github.com/Icenowy/linux branch ice-a64-v6.1
+these two branches will be superceded by
+montejoie/stmmac-sun8i-wip-next-20170216
+
+sun8i usb otg: grabbed from patchwork:
+https://patchwork.kernel.org/project/linux-arm-kernel/list/?submitter=168863
+
+sun8i hdmi video & audio: grabbed from patchwork:
+https://patchwork.kernel.org/project/linux-arm-kernel/list/?submitter=655
+
+sun50i dma : I've made my own but this person beat me.
+https://patchwork.kernel.org/project/LKML/list/?submitter=170937
+
+sun8i: v3: Added some changes to sun8i-codec-analog which will probably be
+integrated before my A64 push
+https://patchwork.kernel.org/project/linux-arm-kernel/list/?submitter=168863
+
+sun5i: hdmi: grabbed from patchwork:
+https://patchwork.kernel.org/project/linux-arm-kernel/list/?submitter=31862
+
+sun4i: dual pipeline support:
+https://patchwork.kernel.org/project/linux-arm-kernel/list/?submitter=83111 

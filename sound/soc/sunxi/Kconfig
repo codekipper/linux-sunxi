@@ -37,6 +37,15 @@ config SND_SUN4I_I2S
 	  the Allwinner A10 I2S. You will also need to select the
 	  individual machine drivers to support below.
 
+config SND_SUNXI_UDA1380
+	tristate "Audio support for A20 with UDA1380 codec on I2S DA0"
+	depends on SND_SUN4I_I2S && I2C
+	select SND_SIMPLE_CARD
+	select SND_SOC_UDA1380
+	help
+	  Say Y if you want to add support for ASoC audio on an A20 board
+	  with a UDA1380 codec on I2S DA0 interface.
+
 config SND_SUN4I_SPDIF
 	tristate "Allwinner A10 SPDIF Support"
 	depends on OF

@@ -183,6 +183,20 @@ static int adda_reg_write(void *context, unsigned int reg, unsigned int val)
 	/* Clear write bit */
 	writel(readl(base) & ~ADDA_PR_WRITE, base);
 
+	/* COOPS DEBUGGING */
+	{
+	u32 reg_val = 0;
+	adda_reg_read(context, SUN8I_ADDA_HP_VOLC, &reg_val);
+	printk("SUN8I_ADDA_HP_VOLC 0x%x\n", reg_val);
+	adda_reg_read(context, SUN8I_ADDA_LOMIXSC, &reg_val);
+	printk("SUN8I_ADDA_LOMIXSC 0x%x\n", reg_val);
+	adda_reg_read(context, SUN8I_ADDA_ROMIXSC, &reg_val);
+	printk("SUN8I_ADDA_ROMIXSC 0x%x\n", reg_val);
+	adda_reg_read(context, SUN8I_ADDA_DAC_PA_SRC, &reg_val);
+	printk("SUN8I_ADDA_DAC_PA_SRC 0x%x\n", reg_val);
+	adda_reg_read(context, SUN50I_ADDA_DAC_PA_SRC, &reg_val);
+	printk("SUN50I_ADDA_DAC_PA_SRC 0x%x\n", reg_val);
+	}
 	return 0;
 }
 

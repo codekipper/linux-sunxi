@@ -737,6 +737,7 @@
 			dma-names = "tx";
 			pinctrl-names = "default";
 			pinctrl-0 = <&spdif_tx_pin>;
+			spdif-out = "okay";
 			status = "disabled";
 		};
 

@@ -176,6 +176,7 @@ struct sun4i_spdif_quirks {
 	unsigned int reg_dac_txdata;
 	bool has_reset;
 	unsigned int val_fctl_ftx;
+	bool has_rx;
 };
 
 /*
@@ -569,7 +570,8 @@ static int sun4i_spdif_soc_dai_probe(struct snd_soc_dai *dai)
 	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(dai);
 
 	snd_soc_dai_init_dma_data(dai, &host->dma_params_tx,
-						&host->dma_params_rx);
+				  host->capture_supported ? \
+				  &host->dma_params_rx : NULL);
 	return 0;
 }
 
@@ -607,6 +609,7 @@ static struct snd_soc_dai_driver sun4i_spdif_dai = {
 static const struct sun4i_spdif_quirks sun4i_a10_spdif_quirks = {
 	.reg_dac_txdata	= SUN4I_SPDIF_TXFIFO,
 	.val_fctl_ftx   = SUN4I_SPDIF_FCTL_FTX,
+	.has_rx		= true,
 };
 
 static const struct sun4i_spdif_quirks sun6i_a31_spdif_quirks = {

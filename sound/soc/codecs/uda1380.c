@@ -149,7 +149,10 @@ static int uda1380_reset(struct snd_soc_codec *codec)
 {
 	struct uda1380_platform_data *pdata = codec->dev->platform_data;
 
+	dev_info(codec->dev, "%s: codec soft reset\n", __func__);
+	return 0; // bypassed the underlying "soft reset" as it was
 	if (gpio_is_valid(pdata->gpio_reset)) {
+		dev_err(codec->dev, "%s: gpio reset is valid\n", __func__);
 		gpio_set_value(pdata->gpio_reset, 1);
 		mdelay(1);
 		gpio_set_value(pdata->gpio_reset, 0);
@@ -401,8 +404,11 @@ static const struct snd_soc_dapm_route uda1380_dapm_routes[] = {
 	{"Input Mux", "Line", "Left PGA"},
 
 	/* right input */
-	{"Right ADC", "Mic + Line R", "Right PGA"},
-	{"Right ADC", "Line", "Right PGA"},
+	{"Right ADC", NULL, "Input Mux"},
+	{"Input Mux", "Mic", "Mic LNA"},
+	{"Input Mux", "Mic + Line R", "Right PGA"},
+	{"Input Mux", "Line L", "Left PGA"},
+	{"Input Mux", "Line", "Right PGA"},
 
 	/* inputs */
 	{"Mic LNA", NULL, "VINM"},
@@ -596,12 +602,15 @@ static int uda1380_set_bias_level(struct snd_soc_codec *codec,
 		break;
 	case SND_SOC_BIAS_STANDBY:
 		if (snd_soc_codec_get_bias_level(codec) == SND_SOC_BIAS_OFF) {
+/*
 			if (gpio_is_valid(pdata->gpio_power)) {
 				gpio_set_value(pdata->gpio_power, 1);
+				printk("uda1380: AV bias_level, GPIO power is valid?! \n");
+				//gpio_set_value(pdata->gpio_power, 1); FIXME AV gpio_power should now be valid
 				mdelay(1);
 				uda1380_reset(codec);
 			}
-
+*/
 			uda1380_sync_cache(codec);
 		}
 		uda1380_write(codec, UDA1380_PM, 0x0);
@@ -690,20 +699,64 @@ static struct snd_soc_dai_driver uda1380_dai[] = {
 static int uda1380_probe(struct snd_soc_codec *codec)
 {
 	struct uda1380_platform_data *pdata =codec->dev->platform_data;
+	void *np =codec->dev->of_node; // AV added for codec data coming from DT and not from legacy platform data
 	struct uda1380_priv *uda1380 = snd_soc_codec_get_drvdata(codec);
 	int ret;
 
 	uda1380->codec = codec;
 
+	printk("uda1380: AV probe %x dac_clk %x\n", 1, uda1380->dac_clk);
 	codec->hw_write = (hw_write_t)i2c_master_send;
 	codec->control_data = uda1380->control_data;
 
-	if (!gpio_is_valid(pdata->gpio_power)) {
-		ret = uda1380_reset(codec);
-		if (ret)
-			return ret;
+	// if  pdata is NULL, it could be the platform data are coming from DT..
+	// see: https://lwn.net/Articles/448502/
+	if (!pdata) {
+		if (np) {
+			pdata = kzalloc(sizeof(*pdata), GFP_KERNEL);
+			if (!pdata) {
+				dev_err(codec->dev,
+					"ASoC: %s can't allocate platform data for %s\n",
+					__func__, codec->component.name);
+				return -ENOMEM;
+			}
+			pdata->gpio_power = -1; // put not valid gpio if not overridden by DT
+			pdata->gpio_reset = -1; // put not valid gpio if not overridden by DT
+			printk("uda1380: AV platf-data from DT\n");
+			of_property_read_u32(np, "dac-clk", &pdata->dac_clk);
+			of_property_read_u32(np, "power-gpio", &pdata->gpio_power);
+			//if (!pdata->gpio_power) pdata->gpio_power = -EINVAL; // so gpio_is_valid() is false
+			of_property_read_u32(np, "reset-gpio", &pdata->gpio_reset);
+			// copy dac_clk from platform_data to private_data (redundant?)
+			uda1380->dac_clk=pdata->dac_clk;
+			printk("uda1380: AV dac_clk %x\n", uda1380->dac_clk);
+			printk("uda1380: AV gpio reset %x\n", pdata->gpio_reset);
+		} else {
+			return -EINVAL;
+		}
 	}
 
+	if (gpio_is_valid(pdata->gpio_reset)) {
+		ret = gpio_request_one(pdata->gpio_reset, GPIOF_OUT_INIT_LOW,
+				       "uda1380 reset");
+		printk("uda1380: AV get reset gpio, ret %x\n", ret);
+		if (ret)
+			goto err_out;
+	}
+
+	if (gpio_is_valid(pdata->gpio_power)) {
+		ret = gpio_request_one(pdata->gpio_power, GPIOF_OUT_INIT_LOW,
+				   "uda1380 power");
+		printk("uda1380: AV get power gpio, ret %x\n", ret);
+		if (ret)
+			goto err_free_gpio;
+	} else {
+		ret = uda1380_reset(codec);
+		if (ret)
+			goto err_free_gpio;
+	}
+
+	printk("uda1380: init work\n");
 	INIT_WORK(&uda1380->work, uda1380_flush_work);
 
 	/* set clock input */
@@ -715,13 +768,35 @@ static int uda1380_probe(struct snd_soc_codec *codec)
 		uda1380_write_reg_cache(codec, UDA1380_CLK,
 			R00_DAC_CLK);
 		break;
+       default:
+               printk("uda1380: AV got funny dac_clk, val %x\n", pdata->dac_clk);
+               uda1380_write_reg_cache(codec, UDA1380_CLK, 0);
+               break;
 	}
+
+	return 0;
+
+err_free_gpio:
+	if (gpio_is_valid(pdata->gpio_reset))
+		gpio_free(pdata->gpio_reset);
+err_out:
+	return ret;
+}
+
+/* power down chip */
+static int uda1380_remove(struct snd_soc_codec *codec)
+{
+	struct uda1380_platform_data *pdata =codec->dev->platform_data;
+
+	gpio_free(pdata->gpio_reset);
+	gpio_free(pdata->gpio_power);
 
 	return 0;
 }
 
 static struct snd_soc_codec_driver soc_codec_dev_uda1380 = {
 	.probe =	uda1380_probe,
+	.remove =	uda1380_remove,
 	.read =		uda1380_read_reg_cache,
 	.write =	uda1380_write,
 	.set_bias_level = uda1380_set_bias_level,
@@ -742,34 +817,17 @@ static struct snd_soc_codec_driver soc_codec_dev_uda1380 = {
 	},
 };
 
+#if IS_ENABLED(CONFIG_I2C)
 static int uda1380_i2c_probe(struct i2c_client *i2c,
 			     const struct i2c_device_id *id)
 {
-	struct uda1380_platform_data *pdata = i2c->dev.platform_data;
 	struct uda1380_priv *uda1380;
 	int ret;
-
-	if (!pdata)
-		return -EINVAL;
 
 	uda1380 = devm_kzalloc(&i2c->dev, sizeof(struct uda1380_priv),
 			       GFP_KERNEL);
 	if (uda1380 == NULL)
 		return -ENOMEM;
-
-	if (gpio_is_valid(pdata->gpio_reset)) {
-		ret = devm_gpio_request_one(&i2c->dev, pdata->gpio_reset,
-			GPIOF_OUT_INIT_LOW, "uda1380 reset");
-		if (ret)
-			return ret;
-	}
-
-	if (gpio_is_valid(pdata->gpio_power)) {
-		ret = devm_gpio_request_one(&i2c->dev, pdata->gpio_power,
-			GPIOF_OUT_INIT_LOW, "uda1380 power");
-		if (ret)
-			return ret;
-	}
 
 	i2c_set_clientdata(i2c, uda1380);
 	uda1380->control_data = i2c;
@@ -806,8 +864,27 @@ static struct i2c_driver uda1380_i2c_driver = {
 	.remove =   uda1380_i2c_remove,
 	.id_table = uda1380_i2c_id,
 };
+#endif
 
-module_i2c_driver(uda1380_i2c_driver);
+static int __init uda1380_modinit(void)
+{
+	int ret = 0;
+#if IS_ENABLED(CONFIG_I2C)
+	ret = i2c_add_driver(&uda1380_i2c_driver);
+	if (ret != 0)
+		pr_err("Failed to register UDA1380 I2C driver: %d\n", ret);
+#endif
+	return ret;
+}
+module_init(uda1380_modinit);
+
+static void __exit uda1380_exit(void)
+{
+#if IS_ENABLED(CONFIG_I2C)
+	i2c_del_driver(&uda1380_i2c_driver);
+#endif
+}
+module_exit(uda1380_exit);
 
 MODULE_AUTHOR("Giorgio Padrin");
 MODULE_DESCRIPTION("Audio support for codec Philips UDA1380");

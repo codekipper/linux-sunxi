@@ -72,6 +72,27 @@
 			default-state = "on";
 		};
 	};
+
+        pcm5102: pcm510x {
+                compatible = "ti,pcm5102a";
+                pcm510x,format = "i2s";
+                #sound-dai-cells = <0>;
+        };
+
+	sound_i2s {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+
+		simple-audio-card,mclk-fs = <256>;
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&pcm5102>;
+		};
+	};
 };
 
 &ahci {
@@ -136,6 +157,12 @@
 &i2c2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c2_pins_a>;
+	status = "okay";
+};
+
+&i2s0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2s0_bclk>, <&i2s0_lrclk>, <&i2s0_sdo0>;
 	status = "okay";
 };
 

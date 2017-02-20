@@ -42,6 +42,7 @@ config SND_SUNXI_UDA1380
 	depends on SND_SUN4I_I2S && I2C
 	select SND_SIMPLE_CARD
 	select SND_SOC_UDA1380
+	select SND_SOC_PCM5102A
 	help
 	  Say Y if you want to add support for ASoC audio on an A20 board
 	  with a UDA1380 codec on I2S DA0 interface.

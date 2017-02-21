@@ -49,7 +49,7 @@
 #define SUN8I_ADDA_ROMIXSC_DACR			1
 #define SUN8I_ADDA_ROMIXSC_DACL			0
 #define SUN8I_ADDA_DAC_PA_SRC		0x03
-#define SUN50I_ADDA_DAC_PA_SRC		0x07
+#define SUN50I_ADDA_DAC_PA_SRC		0x0a
 #define SUN8I_ADDA_DAC_PA_SRC_DACAREN		7
 #define SUN8I_ADDA_DAC_PA_SRC_DACALEN		6
 #define SUN8I_ADDA_DAC_PA_SRC_RMIXEN		5
@@ -378,6 +378,61 @@ static const struct snd_soc_dapm_widget sun8i_v3s_codec_mixer_widgets[] = {
 			   SUN8I_ADDA_ADC_AP_EN_ADCREN, 0,
 			   sun8i_v3s_codec_adc_mixer_controls,
 			   ARRAY_SIZE(sun8i_v3s_codec_adc_mixer_controls)),
+};
+
+static const struct snd_soc_dapm_widget sun50i_codec_common_widgets[] = {
+	/* ADC */
+	SND_SOC_DAPM_ADC("Left ADC", NULL, SUN8I_ADDA_ADC_AP_EN,
+			 SUN8I_ADDA_ADC_AP_EN_ADCLEN, 0),
+	SND_SOC_DAPM_ADC("Right ADC", NULL, SUN8I_ADDA_ADC_AP_EN,
+			 SUN8I_ADDA_ADC_AP_EN_ADCREN, 0),
+
+	/* DAC */
+	SND_SOC_DAPM_DAC("Left DAC", NULL, SUN50I_ADDA_DAC_PA_SRC,
+			 SUN8I_ADDA_DAC_PA_SRC_DACALEN, 0),
+	SND_SOC_DAPM_DAC("Right DAC", NULL, SUN50I_ADDA_DAC_PA_SRC,
+			 SUN8I_ADDA_DAC_PA_SRC_DACAREN, 0),
+	/*
+	 * Due to this component and the codec belonging to separate DAPM
+	 * contexts, we need to manually link the above widgets to their
+	 * stream widgets at the card level.
+	 */
+
+	/* Line In */
+	SND_SOC_DAPM_INPUT("LINEIN"),
+
+	/* Microphone inputs */
+	SND_SOC_DAPM_INPUT("MIC1"),
+	SND_SOC_DAPM_INPUT("MIC2"),
+
+	/* Microphone Bias */
+	SND_SOC_DAPM_SUPPLY("MBIAS", SUN8I_ADDA_MIC1G_MICBIAS_CTRL,
+			    SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MMICBIASEN,
+			    0, NULL, 0),
+
+	/* Mic input path */
+	SND_SOC_DAPM_PGA("Mic1 Amplifier", SUN8I_ADDA_MIC1G_MICBIAS_CTRL,
+			 SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MIC1AMPEN, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("Mic2 Amplifier", SUN8I_ADDA_MIC2G_CTRL,
+			 SUN8I_ADDA_MIC2G_CTRL_MIC2AMPEN, 0, NULL, 0),
+
+	/* Mixers */
+	SND_SOC_DAPM_MIXER("Left Mixer", SUN50I_ADDA_DAC_PA_SRC,
+			   SUN8I_ADDA_DAC_PA_SRC_LMIXEN, 0,
+			   sun8i_codec_mixer_controls,
+			   ARRAY_SIZE(sun8i_codec_mixer_controls)),
+	SND_SOC_DAPM_MIXER("Right Mixer", SUN50I_ADDA_DAC_PA_SRC,
+			   SUN8I_ADDA_DAC_PA_SRC_RMIXEN, 0,
+			   sun8i_codec_mixer_controls,
+			   ARRAY_SIZE(sun8i_codec_mixer_controls)),
+	SND_SOC_DAPM_MIXER("Left ADC Mixer", SUN8I_ADDA_ADC_AP_EN,
+			   SUN8I_ADDA_ADC_AP_EN_ADCLEN, 0,
+			   sun8i_codec_adc_mixer_controls,
+			   ARRAY_SIZE(sun8i_codec_adc_mixer_controls)),
+	SND_SOC_DAPM_MIXER("Right ADC Mixer", SUN8I_ADDA_ADC_AP_EN,
+			   SUN8I_ADDA_ADC_AP_EN_ADCREN, 0,
+			   sun8i_codec_adc_mixer_controls,
+			   ARRAY_SIZE(sun8i_codec_adc_mixer_controls)),
 };
 
 static const struct snd_soc_dapm_route sun8i_codec_common_routes[] = {
@@ -993,6 +1048,16 @@ static const struct snd_soc_component_driver sun8i_codec_analog_cmpnt_drv = {
 	.probe			= sun8i_codec_analog_cmpnt_probe,
 };
 
+static const struct snd_soc_component_driver sun50i_codec_analog_cmpnt_drv = {
+	.controls		= sun8i_codec_common_controls,
+	.num_controls		= ARRAY_SIZE(sun8i_codec_common_controls),
+	.dapm_widgets		= sun50i_codec_common_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(sun50i_codec_common_widgets),
+	.dapm_routes		= sun8i_codec_common_routes,
+	.num_dapm_routes	= ARRAY_SIZE(sun8i_codec_common_routes),
+	.probe			= sun8i_codec_analog_cmpnt_probe,
+};
+
 static const struct of_device_id sun8i_codec_analog_of_match[] = {
 	{
 		.compatible = "allwinner,sun8i-a23-codec-analog",
@@ -1034,7 +1099,7 @@ static int sun8i_codec_analog_probe(struct platform_device *pdev)
 	}
 
 	return devm_snd_soc_register_component(&pdev->dev,
-					       &sun8i_codec_analog_cmpnt_drv,
+					       &sun50i_codec_analog_cmpnt_drv,
 					       NULL, 0);
 }
 

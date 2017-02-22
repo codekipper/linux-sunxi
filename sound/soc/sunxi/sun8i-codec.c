@@ -341,9 +341,43 @@ static const struct snd_soc_dapm_route sun8i_codec_dapm_routes[] = {
 	  "AIF1 Slot 0 Right"},
 };
 
+static int sun8i_debug_trigger(struct snd_pcm_substream *substream, int cmd,
+			     struct snd_soc_dai *dai)
+{
+	struct sun8i_codec *codec = snd_soc_dai_get_drvdata(dai);
+
+	{
+	/* COOPS DEBUGGING FOR NOW */
+	u32 reg_val = 0;
+
+	printk("Codec Command State %d Audio Clock is %lu\n", cmd, clk_get_rate(codec->clk_module));
+	regmap_read(codec->regmap, SUN8I_SYSCLK_CTL, &reg_val);
+	printk("SUN8I_SYSCLK_CTL 0x%x\n", reg_val);
+	regmap_read(codec->regmap, SUN8I_MOD_CLK_ENA, &reg_val);
+	printk("SUN8I_MOD_CLK_ENA 0x%x\n", reg_val);
+	regmap_read(codec->regmap, SUN8I_MOD_RST_CTL, &reg_val);
+	printk("SUN8I_MOD_RST_CTL 0x%x\n", reg_val);
+	regmap_read(codec->regmap, SUN8I_SYS_SR_CTRL, &reg_val);
+	printk("SUN8I_SYS_SR_CTRL 0x%x\n", reg_val);
+	regmap_read(codec->regmap, SUN8I_AIF1CLK_CTRL, &reg_val);
+	printk("SUN8I_AIF1CLK_CTRL 0x%x\n", reg_val);
+	regmap_read(codec->regmap, SUN8I_AIF1_DACDAT_CTRL, &reg_val);
+	printk("SUN8I_AIF1_DACDAT_CTRL 0x%x\n", reg_val);
+	regmap_read(codec->regmap, SUN8I_DAC_DIG_CTRL, &reg_val);
+	printk("SUN8I_DAC_DIG_CTRL 0x%x\n", reg_val);
+	regmap_read(codec->regmap, 0x324, &reg_val);
+	printk("SUN8I_DAC_VOL_CTRL 0x%x\n", reg_val);
+	regmap_read(codec->regmap, SUN8I_DAC_MXR_SRC, &reg_val);
+	printk("SUN8I_DAC_MXR_SRC 0x%x\n", reg_val);
+	}
+
+	return 0;
+}
+
 static const struct snd_soc_dai_ops sun8i_codec_dai_ops = {
 	.hw_params = sun8i_codec_hw_params,
 	.set_fmt = sun8i_set_fmt,
+	.trigger = sun8i_debug_trigger,
 };
 
 static struct snd_soc_dai_driver sun8i_codec_dai = {

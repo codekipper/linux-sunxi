@@ -147,6 +147,7 @@
 
 struct sun4i_tcon_quirks {
 	bool	has_unknown_mux; /* sun5i has undocumented mux */
+	bool	has_channel_0;	/* some A83T+ TCONs don't have channel 0*/
 	bool	has_channel_1;	/* a33 does not have channel 1 */
 	bool	needs_de_be_mux; /* sun6i needs mux to select backend */
 };

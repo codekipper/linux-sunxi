@@ -182,6 +182,7 @@ static bool sun4i_drv_node_is_tcon(struct device_node *node)
 		of_device_is_compatible(node, "allwinner,sun6i-a31-tcon") ||
 		of_device_is_compatible(node, "allwinner,sun6i-a31s-tcon") ||
 		of_device_is_compatible(node, "allwinner,sun8i-a33-tcon") ||
+		of_device_is_compatible(node, "allwinner,sun8i-a83t-tcon1") ||
 		of_device_is_compatible(node, "allwinner,sun8i-v3s-tcon");
 }
 

@@ -64,9 +64,16 @@
 #define SUN8I_ADDA_LINEIN_GCTRL		0x05
 #define SUN8I_ADDA_LINEIN_GCTRL_LINEING		4
 #define SUN8I_ADDA_LINEIN_GCTRL_PHONEG		0
+#define SUN50I_ADDA_LINEOUT_CTRL0	0x05
+#define SUN50I_ADDA_LINEOUT_CTRL0_LEN		7
+#define SUN50I_ADDA_LINEOUT_CTRL0_REN		6
+#define SUN50I_ADDA_LINEOUT_CTRL0_LSRC_SEL	5
+#define SUN50I_ADDA_LINEOUT_CTRL0_RSRC_SEL	4
 #define SUN8I_ADDA_MICIN_GCTRL		0x06
 #define SUN8I_ADDA_MICIN_GCTRL_MIC1G		4
 #define SUN8I_ADDA_MICIN_GCTRL_MIC2G		0
+#define SUN50I_ADDA_LINEOUT_CTRL1	0x06
+#define SUN50I_ADDA_LINEOUT_CTRL1_VOL		0
 #define SUN8I_ADDA_PAEN_HP_CTRL		0x07
 #define SUN8I_ADDA_PAEN_HP_CTRL_HPPAEN		7
 #define SUN8I_ADDA_PAEN_HP_CTRL_LINEOUTEN	7	/* H3 specific */
@@ -761,6 +768,7 @@ static const DECLARE_TLV_DB_RANGE(sun8i_codec_lineout_vol_scale,
 	0, 1, TLV_DB_SCALE_ITEM(TLV_DB_GAIN_MUTE, 0, 1),
 	2, 31, TLV_DB_SCALE_ITEM(-4350, 150, 0),
 );
+
 static const struct snd_kcontrol_new sun8i_codec_lineout_controls[] = {
 	SOC_SINGLE_TLV("Line Out Playback Volume",
 		       SUN8I_ADDA_PHONE_GAIN_CTRL,
@@ -770,6 +778,17 @@ static const struct snd_kcontrol_new sun8i_codec_lineout_controls[] = {
 		   SUN8I_ADDA_MIC2G_CTRL,
 		   SUN8I_ADDA_MIC2G_CTRL_LINEOUTLEN,
 		   SUN8I_ADDA_MIC2G_CTRL_LINEOUTREN, 1, 0),
+};
+
+static const struct snd_kcontrol_new sun50i_codec_lineout_controls[] = {
+	SOC_SINGLE_TLV("Line Out Playback Volume",
+		       SUN50I_ADDA_LINEOUT_CTRL1,
+		       SUN50I_ADDA_LINEOUT_CTRL1_VOL, 0x1f, 0,
+		       sun8i_codec_lineout_vol_scale),
+	SOC_DOUBLE("Line Out Playback Switch",
+		   SUN50I_ADDA_LINEOUT_CTRL0,
+		   SUN50I_ADDA_LINEOUT_CTRL0_REN,
+		   SUN50I_ADDA_LINEOUT_CTRL0_REN, 1, 0),
 };
 
 static const char * const sun8i_codec_lineout_src_enum_text[] = {
@@ -782,9 +801,20 @@ static SOC_ENUM_DOUBLE_DECL(sun8i_codec_lineout_src_enum,
 			    SUN8I_ADDA_MIC2G_CTRL_LINEOUTRSRC,
 			    sun8i_codec_lineout_src_enum_text);
 
+static SOC_ENUM_DOUBLE_DECL(sun50i_codec_lineout_src_enum,
+			    SUN50I_ADDA_LINEOUT_CTRL0,
+			    SUN50I_ADDA_LINEOUT_CTRL0_LSRC_SEL,
+			    SUN50I_ADDA_LINEOUT_CTRL0_RSRC_SEL,
+			    sun8i_codec_lineout_src_enum_text);
+
 static const struct snd_kcontrol_new sun8i_codec_lineout_src[] = {
 	SOC_DAPM_ENUM("Line Out Source Playback Route",
 		      sun8i_codec_lineout_src_enum),
+};
+
+static const struct snd_kcontrol_new sun50i_codec_lineout_src[] = {
+	SOC_DAPM_ENUM("Line Out Source Playback Route",
+		      sun50i_codec_lineout_src_enum),
 };
 
 static const struct snd_soc_dapm_widget sun8i_codec_lineout_widgets[] = {
@@ -793,6 +823,17 @@ static const struct snd_soc_dapm_widget sun8i_codec_lineout_widgets[] = {
 	/* It is unclear if this is a buffer or gate, model it as a supply */
 	SND_SOC_DAPM_SUPPLY("Line Out Enable", SUN8I_ADDA_PAEN_HP_CTRL,
 			    SUN8I_ADDA_PAEN_HP_CTRL_LINEOUTEN, 0, NULL, 0),
+	SND_SOC_DAPM_OUTPUT("LINEOUT"),
+};
+
+static const struct snd_soc_dapm_widget sun50i_codec_lineout_widgets[] = {
+	SND_SOC_DAPM_MUX("Line Out Source Playback Route",
+			 SND_SOC_NOPM, 0, 0, sun50i_codec_lineout_src),
+	/* It is unclear if this is a buffer or gate, model it as a supply */
+	SND_SOC_DAPM_SUPPLY("Left Line Out Enable", SUN50I_ADDA_LINEOUT_CTRL0,
+			    SUN50I_ADDA_LINEOUT_CTRL0_LEN, 0, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("Right Line Out Enable", SUN50I_ADDA_LINEOUT_CTRL0,
+			    SUN50I_ADDA_LINEOUT_CTRL0_REN, 0, NULL, 0),
 	SND_SOC_DAPM_OUTPUT("LINEOUT"),
 };
 
@@ -805,7 +846,17 @@ static const struct snd_soc_dapm_route sun8i_codec_lineout_routes[] = {
 	{ "LINEOUT", NULL, "Line Out Enable", },
 };
 
-static int sun8i_codec_add_lineout(struct snd_soc_component *cmpnt)
+static const struct snd_soc_dapm_route sun50i_codec_lineout_routes[] = {
+	{ "Line Out Source Playback Route", "Stereo", "Left Mixer" },
+	{ "Line Out Source Playback Route", "Stereo", "Right Mixer" },
+	{ "Line Out Source Playback Route", "Mono Differential", "Left Mixer" },
+	{ "Line Out Source Playback Route", "Mono Differential", "Right Mixer" },
+	{ "LINEOUT", NULL, "Line Out Source Playback Route" },
+	{ "LINEOUT", NULL, "Left Line Out Enable", },
+	{ "LINEOUT", NULL, "Right Line Out Enable", },
+};
+
+static int sun8i_h3_codec_add_lineout(struct snd_soc_component *cmpnt)
 {
 	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
 	struct device *dev = cmpnt->dev;
@@ -901,6 +952,37 @@ static int sun8i_codec_add_mic2(struct snd_soc_component *cmpnt)
 	return 0;
 }
 
+static int sun50i_a64_codec_add_lineout(struct snd_soc_component *cmpnt)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
+	struct device *dev = cmpnt->dev;
+	int ret;
+
+	ret = snd_soc_add_component_controls(cmpnt,
+					     sun50i_codec_lineout_controls,
+					     ARRAY_SIZE(sun50i_codec_lineout_controls));
+	if (ret) {
+		dev_err(dev, "Failed to add Line Out controls: %d\n", ret);
+		return ret;
+	}
+
+	ret = snd_soc_dapm_new_controls(dapm, sun50i_codec_lineout_widgets,
+					ARRAY_SIZE(sun50i_codec_lineout_widgets));
+	if (ret) {
+		dev_err(dev, "Failed to add Line Out DAPM widgets: %d\n", ret);
+		return ret;
+	}
+
+	ret = snd_soc_dapm_add_routes(dapm, sun50i_codec_lineout_routes,
+				      ARRAY_SIZE(sun50i_codec_lineout_routes));
+	if (ret) {
+		dev_err(dev, "Failed to add Line Out DAPM routes: %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 struct sun8i_codec_analog_quirks {
 	bool has_headphone;
 	bool has_hmic;
@@ -909,6 +991,7 @@ struct sun8i_codec_analog_quirks {
 	bool has_mbias;
 	bool has_mic2;
 	int (*add_headphone)(struct snd_soc_component *cmpnt);
+	int (*add_lineout)(struct snd_soc_component *cmpnt);
 };
 
 static const struct sun8i_codec_analog_quirks sun8i_a23_quirks = {
@@ -925,6 +1008,7 @@ static const struct sun8i_codec_analog_quirks sun8i_h3_quirks = {
 	.has_lineout	= true,
 	.has_mbias	= true,
 	.has_mic2	= true,
+	.add_lineout	= sun8i_h3_codec_add_lineout,
 };
 
 static int sun8i_codec_analog_add_mixer(struct snd_soc_component *cmpnt,
@@ -977,8 +1061,9 @@ static const struct sun8i_codec_analog_quirks sun8i_v3s_quirks = {
 static const struct sun8i_codec_analog_quirks sun50i_a64_quirks = {
 	.has_headphone	= true,
 	.has_hmic	= false,
-	.has_lineout	= false, /* is true but I'm lazy */
+	.has_lineout	= true, /* is true but I'm lazy */
 	.add_headphone	= sun50i_a64_codec_add_headphone,
+	.add_lineout	= sun50i_a64_codec_add_lineout,
 };
 
 static int sun8i_codec_analog_cmpnt_probe(struct snd_soc_component *cmpnt)
@@ -1018,7 +1103,7 @@ static int sun8i_codec_analog_cmpnt_probe(struct snd_soc_component *cmpnt)
 	}
 
 	if (quirks->has_lineout) {
-		ret = sun8i_codec_add_lineout(cmpnt);
+		ret = quirks->add_lineout(cmpnt);
 		if (ret)
 			return ret;
 	}

@@ -19,6 +19,11 @@ UPSTREAM - Patches ready for pushing (always rebase first)
 |
 LINUX-NEXT
 
+FUTURE WORK
+===========
+simple graph audio patches: which could be used for HDMI audio
+https://patchwork.kernel.org/project/alsa-devel/list/?submitter=7554
+
 THIRD PARTY PATCHES
 ===================
 

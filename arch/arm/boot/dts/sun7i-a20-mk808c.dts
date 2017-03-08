@@ -68,6 +68,10 @@
 	};
 };
 
+&be0 {
+	status = "okay";
+};
+
 &codec {
 	status = "okay";
 };
@@ -77,6 +81,10 @@
 };
 
 &ehci1 {
+	status = "okay";
+};
+
+&hdmi0 {
 	status = "okay";
 };
 
@@ -150,6 +158,10 @@
 };
 
 &reg_usb2_vbus {
+	status = "okay";
+};
+
+&tcon0 {
 	status = "okay";
 };
 

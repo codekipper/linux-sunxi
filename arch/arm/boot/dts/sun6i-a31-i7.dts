@@ -88,6 +88,10 @@
 	};
 };
 
+&be0 {
+	status = "okay";
+};
+
 &codec {
 	allwinner,audio-routing =
 		"Headphone", "HP";
@@ -103,6 +107,10 @@
 };
 
 &ehci1 {
+	status = "okay";
+};
+
+&hdmi {
 	status = "okay";
 };
 
@@ -251,6 +259,10 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&spdif_pins_a>;
 	spdif-out = "okay";
+	status = "okay";
+};
+
+&tcon0 {
 	status = "okay";
 };
 

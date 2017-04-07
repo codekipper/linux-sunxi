@@ -51,6 +51,63 @@
 		/* ethernet0 is the H3 emac, defined in sun8i-h3.dtsi */
 		ethernet1 = &rtl8189ftv;
 	};
+
+        cs4270: cs4270 {
+                compatible = "cirrus,cs4270";
+                #sound-dai-cells = <0>;
+        };
+
+        sound {
+                compatible = "simple-audio-card";
+                simple-audio-card,format = "i2s";
+
+                simple-audio-card,dai-link@0 {
+                        format = "i2s";
+                        cpu {
+                                sound-dai = <&i2s0>;
+                        };
+
+                        codec {
+                                sound-dai = <&spdif_out>;
+                        };
+                };
+                simple-audio-card,dai-link@1 {
+                        format = "i2s";
+                        cpu {
+                                sound-dai = <&i2s0>;
+                        };
+
+                        codec {
+                                sound-dai = <&spdif_in>;
+                        };
+                };
+        };
+
+        spdif_in: spdif-in {
+                #sound-dai-cells = <0>;
+                compatible = "linux,spdif-dir";
+        };
+
+        spdif_out: spdif-out {
+                #sound-dai-cells = <0>;
+                compatible = "linux,spdif-dit";
+        };
+};
+
+&codec {
+	status = "okay";
+};
+
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	status = "okay";
+};
+
+&i2s0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2s0_bclk> , <&i2s0_lrclk> , <&i2s0_sdo0>, <&i2s0_sdi>;
+	status = "okay";
 };
 
 &emac {

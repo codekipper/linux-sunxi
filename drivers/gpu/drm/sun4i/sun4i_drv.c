@@ -196,7 +196,8 @@ static int compare_of(struct device *dev, void *data)
 
 static int sun4i_drv_add_endpoints(struct device *dev,
 				   struct component_match **match,
-				   struct device_node *node)
+				   struct device_node *node,
+				   bool add_encoders)
 {
 	struct device_node *port, *ep, *remote;
 	int count = 0;
@@ -224,13 +225,16 @@ static int sun4i_drv_add_endpoints(struct device *dev,
 		count++;
 	}
 
+	/* Skip downstream encoders during the first pass */
+	if (sun4i_drv_node_is_tcon(node) && !add_encoders)
+		return count;
+
 	/* Inputs are listed first, then outputs */
 	port = of_graph_get_port_by_id(node, 1);
 	if (!port) {
 		DRM_DEBUG_DRIVER("No output to bind\n");
 		return count;
 	}
-
 	for_each_available_child_of_node(port, ep) {
 		remote = of_graph_get_remote_port_parent(ep);
 		if (!remote) {
@@ -259,7 +263,8 @@ static int sun4i_drv_add_endpoints(struct device *dev,
 		}
 
 		/* Walk down our tree */
-		count += sun4i_drv_add_endpoints(dev, match, remote);
+		count += sun4i_drv_add_endpoints(dev, match, remote,
+						 add_encoders);
 
 		of_node_put(remote);
 	}
@@ -280,8 +285,19 @@ static int sun4i_drv_probe(struct platform_device *pdev)
 		if (!pipeline)
 			break;
 
+		sun4i_drv_add_endpoints(&pdev->dev, &match, pipeline, false);
+		of_node_put(pipeline);
+	}
+
+	for (i = 0;; i++) {
+		struct device_node *pipeline = of_parse_phandle(np,
+								"allwinner,pipelines",
+								i);
+		if (!pipeline)
+			break;
+
 		count += sun4i_drv_add_endpoints(&pdev->dev, &match,
-						pipeline);
+						 pipeline, true);
 		of_node_put(pipeline);
 
 		DRM_DEBUG_DRIVER("Queued %d outputs on pipeline %d\n",

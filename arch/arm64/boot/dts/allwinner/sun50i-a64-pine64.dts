@@ -76,6 +76,10 @@
 	status = "okay";
 };
 
+&de {
+	status = "okay";
+};
+
 &ehci1 {
 	status = "okay";
 };
@@ -87,7 +91,11 @@
 	phy-handle = <&ext_rmii_phy1>;
 	phy-supply = <&reg_dc1sw>;
 	status = "okay";
+};
 
+&hdmi {
+	hvcc-supply = <&reg_dldo1>;
+	status = "okay";
 };
 
 &i2c1 {
@@ -244,6 +252,10 @@
 /* On Euler connector */
 &spdif {
 	status = "disabled";
+};
+
+&tcon1 {
+	status = "okay";
 };
 
 /* On Exp and Euler connectors */

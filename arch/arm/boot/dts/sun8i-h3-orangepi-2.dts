@@ -145,6 +145,7 @@
 };
 
 &hdmi {
+	#sound-dai-cells = <0>;
 	status = "okay";
 };
 
@@ -152,6 +153,10 @@
 	hdmi_out_con: endpoint {
 		remote-endpoint = <&hdmi_con_in>;
 	};
+};
+
+&i2s2 {
+	status = "okay";
 };
 
 &ir {

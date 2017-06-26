@@ -156,6 +156,7 @@ struct sun4i_hdmi {
 	struct device		*dev;
 
 	void __iomem		*base;
+	struct regmap		*regmap;
 
 	/* Parent clocks */
 	struct clk		*bus_clk;

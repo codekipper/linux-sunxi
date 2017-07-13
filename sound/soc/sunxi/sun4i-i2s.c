@@ -215,9 +215,11 @@ static int sun4i_i2s_get_bclk_div(struct sun4i_i2s *i2s,
 	int div = oversample_rate / word_size / 2;
 	int i;
 
+	printk("%s COOPS word size %d oversample_rate %d\n", __func__, word_size ,oversample_rate);
 	for (i = 0; i < ARRAY_SIZE(sun4i_i2s_bclk_div); i++) {
 		const struct sun4i_i2s_clk_div *bdiv = &sun4i_i2s_bclk_div[i];
 
+		printk("%s COOPS bdiv %d div is %d\n", __func__, bdiv->div, div);
 		if (bdiv->div == div)
 			return bdiv->val + i2s->variant->bclk_adjust;
 	}
@@ -233,9 +235,11 @@ static int sun4i_i2s_get_mclk_div(struct sun4i_i2s *i2s,
 	int div = module_rate / sampling_rate / oversample_rate;
 	int i;
 
+	printk("%s COOPS module rate %d sampling rate is %d oversample_rate %d\n", __func__, module_rate ,sampling_rate ,oversample_rate);
 	for (i = 0; i < ARRAY_SIZE(sun4i_i2s_mclk_div); i++) {
 		const struct sun4i_i2s_clk_div *mdiv = &sun4i_i2s_mclk_div[i];
 
+		printk("%s COOPS mdiv %d div is %d\n", __func__, mdiv->div, div);
 		if (mdiv->div == div)
 			return mdiv->val + i2s->variant->mclk_adjust;
 	}
@@ -248,9 +252,11 @@ static bool sun4i_i2s_oversample_is_valid(unsigned int oversample)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(sun4i_i2s_oversample_rates); i++)
+	for (i = 0; i < ARRAY_SIZE(sun4i_i2s_oversample_rates); i++) {
+		printk("%s COOPS i%d is %d looking for %d\n", __func__, i, sun4i_i2s_oversample_rates[i], oversample);
 		if (sun4i_i2s_oversample_rates[i] == oversample)
 			return true;
+	}
 
 	return false;
 }
@@ -327,6 +333,10 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 	struct sun4i_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 	int sr, wss;
 	u32 width;
+
+	printk("COOPS %s channels is %d, physical width is %d, rate is %d, period size is %d\n",
+		__func__, params_channels(params), params_physical_width(params),
+		params_rate(params), params_period_size(params));
 
 	if (params_channels(params) != 2)
 		return -EINVAL;
@@ -497,6 +507,21 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			   SUN4I_I2S_FIFO_CTRL_TX_MODE(1) |
 			   SUN4I_I2S_FIFO_CTRL_RX_MODE(1));
 
+	{
+	/* COOPS DEBUGGING FOR NOW */
+	u32 reg_val = 0;
+
+	printk("COOPS %s fmt value is %d. Setting the following registers.\n", __func__, fmt);
+	regmap_read(i2s->regmap, SUN4I_I2S_CTRL_REG, &reg_val);
+	printk("SUN4I_I2S_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FMT0_REG, &reg_val);
+	printk("SUN4I_I2S_FMT0_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FIFO_CTRL_REG, &reg_val);
+	printk("SUN4I_I2S_FIFO_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN8I_I2S_TX_CHAN_SEL_REG, &reg_val);
+	printk("SUN8I_I2S_TX_CHAN_SEL_REG 0x%x\n", reg_val);
+	}
+
 	return 0;
 }
 
@@ -594,6 +619,34 @@ static int sun4i_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 
 	default:
 		return -EINVAL;
+	}
+	{
+	/* COOPS DEBUGGING FOR NOW */
+	u32 reg_val = 0;
+
+	printk("I2S Command State %d Audio Clock is %lu\n", cmd, clk_get_rate(i2s->mod_clk));
+	regmap_read(i2s->regmap, SUN4I_I2S_CTRL_REG, &reg_val);
+	printk("SUN4I_I2S_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FMT0_REG, &reg_val);
+	printk("SUN4I_I2S_FMT0_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FMT1_REG, &reg_val);
+	printk("SUN4I_I2S_FMT1_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FIFO_CTRL_REG, &reg_val);
+	printk("SUN4I_I2S_FIFO_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_CLK_DIV_REG, &reg_val);
+	printk("SUN4I_I2S_CLK_DIV_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FIFO_STA_REG, &reg_val);
+	printk("SUN4I_I2S_FIFO_STA_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_TX_CHAN_SEL_REG, &reg_val);
+	printk("SUN4I_I2S_TX_CHAN_SEL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_TX_CHAN_MAP_REG, &reg_val);
+	printk("SUN4I_I2S_TX_CHAN_MAP_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN8I_I2S_TX_CHAN_MAP_REG, &reg_val);
+	printk("SUN8I_I2S_TX_CHAN_MAP_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN8I_I2S_RX_CHAN_SEL_REG, &reg_val);
+	printk("SUN8I_I2S_RX_CHAN_SEL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN8I_I2S_RX_CHAN_MAP_REG, &reg_val);
+	printk("SUN8I_I2S_RX_CHAN_MAP_REG 0x%x\n", reg_val);
 	}
 
 	return 0;

@@ -37,6 +37,7 @@ static int fifo_transfer(struct sun4i_hdmi *hdmi, u8 *buf, int len, bool read)
 			 SUN4I_HDMI_DDC_INT_STATUS_FIFO_REQUEST |
 			 SUN4I_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE;
 	u32 reg;
+	int orig_len = len;
 	/*
 	 * If threshold is inclusive, then the FIFO may only have
 	 * RX_THRESHOLD number of bytes, instead of RX_THRESHOLD + 1.
@@ -50,14 +51,23 @@ static int fifo_transfer(struct sun4i_hdmi *hdmi, u8 *buf, int len, bool read)
 	 */
 	len = min_t(int, len, read ? read_len : SUN4I_HDMI_DDC_FIFO_SIZE);
 
-	/* Wait until error, FIFO request bit set or transfer complete */
-	if (regmap_field_read_poll_timeout(hdmi->field_ddc_int_status, reg,
-					    reg & mask, len * byte_time_ns,
-					    100000))
-		return -ETIMEDOUT;
+#if 1
+	dev_info(hdmi->dev, "want to read %d, will try to read %d\n", orig_len, len);
+	dev_info(hdmi->dev, "FIFO ST: 0x%08x\n", readl(hdmi->base + 0x51c));
+#endif
 
-	if (reg & SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK)
+	/* Wait until error, FIFO request bit set or transfer complete */
+	if (regmap_field_read_poll_timeout(hdmi->field_ddc_int_status,
+					   reg, reg & mask,
+					   len * byte_time_ns, 100000)) {
+		dev_err(hdmi->dev, "FIFO timeout\n");
+		return -ETIMEDOUT;
+	}
+
+	if (reg & SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK) {
+		dev_err(hdmi->dev, "FIFO err: 0x%08x @ %d remaining", reg, orig_len);
 		return -EIO;
+	}
 
 	if (read)
 		readsb(hdmi->base + hdmi->variant->ddc_fifo_reg, buf, len);
@@ -103,8 +113,10 @@ static int xfer_msg(struct sun4i_hdmi *hdmi, struct i2c_msg *msg)
 	regmap_field_write(hdmi->field_ddc_fifo_rx_thres, RX_THRESHOLD);
 	regmap_field_write(hdmi->field_ddc_fifo_clear, 1);
 	if (regmap_field_read_poll_timeout(hdmi->field_ddc_fifo_clear,
-					   reg, !reg, 100, 2000))
+					   reg, !reg, 100, 2000)) {
+		dev_err(hdmi->dev, "FIFO clear timeout\n");
 		return -EIO;
+	}
 
 	/* Set transfer length */
 	regmap_field_write(hdmi->field_ddc_byte_count, msg->len);
@@ -134,13 +146,16 @@ static int xfer_msg(struct sun4i_hdmi *hdmi, struct i2c_msg *msg)
 
 	/* Wait for command to finish */
 	if (regmap_field_read_poll_timeout(hdmi->field_ddc_start,
-					   reg, !reg, 100, 100000))
+					   reg, !reg, 100, 100000)) {
+		dev_err(hdmi->dev, "DDC command finish time out\n");
 		return -EIO;
+	}
 
 	/* Check for errors */
 	regmap_field_read(hdmi->field_ddc_int_status, &reg);
 	if ((reg & SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK) ||
 	    !(reg & SUN4I_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE)) {
+		dev_err(hdmi->dev, "DDC error found: 0x%08x\n", reg);
 		return -EIO;
 	}
 
@@ -165,8 +180,10 @@ static int sun4i_hdmi_i2c_xfer(struct i2c_adapter *adap,
 	regmap_field_write(hdmi->field_ddc_en, 1);
 	regmap_field_write(hdmi->field_ddc_reset, 1);
 	if (regmap_field_read_poll_timeout(hdmi->field_ddc_reset,
-					    reg, !reg, 100, 2000))
+					    reg, !reg, 100, 2000)) {
+		dev_err(hdmi->dev, "DDC reset time out\n");
 		return -EIO;
+	}
 
 	regmap_field_write(hdmi->field_ddc_sck_en, 1);
 	regmap_field_write(hdmi->field_ddc_sda_en, 1);

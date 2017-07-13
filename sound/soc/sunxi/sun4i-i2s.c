@@ -255,7 +255,9 @@ static int sun4i_i2s_get_bclk_div(struct sun4i_i2s *i2s,
 	int div = oversample_rate / word_size / 2;
 	int i;
 
+	printk("%s COOPS word size %d oversample_rate %d mclk is %d\n", __func__, word_size ,oversample_rate, i2s->mclk_freq);
 	for (i = 0; i < size; i++) {
+		printk("%s COOPS bdiv %d div is %d\n", __func__, bdiv->div, div);
 		if (bdiv->div == div)
 			return bdiv->val;
 		bdiv++;
@@ -274,7 +276,9 @@ static int sun4i_i2s_get_mclk_div(struct sun4i_i2s *i2s,
 	int div = module_rate / sampling_rate / oversample_rate;
 	int i;
 
+	printk("%s COOPS module rate %d sampling rate is %d oversample_rate %d\n", __func__, module_rate ,sampling_rate ,oversample_rate);
 	for (i = 0; i < size; i++) {
+		printk("%s COOPS mdiv %d div is %d\n", __func__, mdiv->div, div);
 		if (mdiv->div == div)
 			return mdiv->val;
 		mdiv++;
@@ -288,9 +292,11 @@ static bool sun4i_i2s_oversample_is_valid(unsigned int oversample)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(sun4i_i2s_oversample_rates); i++)
+	for (i = 0; i < ARRAY_SIZE(sun4i_i2s_oversample_rates); i++) {
+		printk("%s COOPS i%d is %d looking for %d\n", __func__, i, sun4i_i2s_oversample_rates[i], oversample);
 		if (sun4i_i2s_oversample_rates[i] == oversample)
 			return true;
+	}
 
 	return false;
 }
@@ -405,6 +411,10 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 	int sr, wss, channels;
 	u32 width;
 	int lines;
+
+	printk("COOPS %s channels is %d, physical width is %d, rate is %d, period size is %d\n",
+		__func__, params_channels(params), params_physical_width(params),
+		params_rate(params), params_period_size(params));
 
 	channels = params_channels(params);
 	if ((channels > dai->driver->playback.channels_max) ||
@@ -591,6 +601,7 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			i2s->bit_clk_master = true;
 			break;
 		case SND_SOC_DAIFMT_CBM_CFM:
+			printk("COOPS SUN4I_I2S_CTRL_REG IS SLAVE\n");
 			/* BCLK and LRCLK slave */
 			val = 0;
 			i2s->bit_clk_master = false;
@@ -612,6 +623,22 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			   SUN4I_I2S_FIFO_CTRL_RX_MODE_MASK,
 			   SUN4I_I2S_FIFO_CTRL_TX_MODE(1) |
 			   SUN4I_I2S_FIFO_CTRL_RX_MODE(1));
+
+	{
+	/* COOPS DEBUGGING FOR NOW */
+	u32 reg_val = 0;
+
+	printk("COOPS %s fmt value is 0x%x. Setting the following registers.\n", __func__, fmt);
+	regmap_read(i2s->regmap, SUN4I_I2S_CTRL_REG, &reg_val);
+	printk("SUN4I_I2S_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FMT0_REG, &reg_val);
+	printk("SUN4I_I2S_FMT0_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FIFO_CTRL_REG, &reg_val);
+	printk("SUN4I_I2S_FIFO_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN8I_I2S_TX_CHAN_SEL_REG, &reg_val);
+	printk("SUN8I_I2S_TX_CHAN_SEL_REG 0x%x\n", reg_val);
+	}
+
 	return 0;
 }
 
@@ -716,6 +743,34 @@ static int sun4i_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 	default:
 		return -EINVAL;
 	}
+	{
+	/* COOPS DEBUGGING FOR NOW */
+	u32 reg_val = 0;
+
+	printk("I2S Command State %d Audio Clock is %lu\n", cmd, clk_get_rate(i2s->mod_clk));
+	regmap_read(i2s->regmap, SUN4I_I2S_CTRL_REG, &reg_val);
+	printk("SUN4I_I2S_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FMT0_REG, &reg_val);
+	printk("SUN4I_I2S_FMT0_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FMT1_REG, &reg_val);
+	printk("SUN4I_I2S_FMT1_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FIFO_CTRL_REG, &reg_val);
+	printk("SUN4I_I2S_FIFO_CTRL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_CLK_DIV_REG, &reg_val);
+	printk("SUN4I_I2S_CLK_DIV_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_FIFO_STA_REG, &reg_val);
+	printk("SUN4I_I2S_FIFO_STA_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_TX_CHAN_SEL_REG, &reg_val);
+	printk("SUN4I_I2S_TX_CHAN_SEL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN4I_I2S_TX_CHAN_MAP_REG, &reg_val);
+	printk("SUN4I_I2S_TX_CHAN_MAP_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN8I_I2S_TX_CHAN_MAP_REG, &reg_val);
+	printk("SUN8I_I2S_TX_CHAN_MAP_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN8I_I2S_RX_CHAN_SEL_REG, &reg_val);
+	printk("SUN8I_I2S_RX_CHAN_SEL_REG 0x%x\n", reg_val);
+	regmap_read(i2s->regmap, SUN8I_I2S_RX_CHAN_MAP_REG, &reg_val);
+	printk("SUN8I_I2S_RX_CHAN_MAP_REG 0x%x\n", reg_val);
+	}
 
 	return 0;
 }
@@ -753,6 +808,8 @@ static int sun4i_i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 				unsigned int freq, int dir)
 {
 	struct sun4i_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+
+	printk("COOPS %s clk id %d freq %d dir %d\n", __func__, clk_id, freq, dir);
 
 	if (clk_id != 0)
 		return -EINVAL;
@@ -1208,6 +1265,7 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 
 	if (!of_property_read_u32(pdev->dev.of_node,
 				  "allwinner,playback-channels", &val)) {
+		dev_err(&pdev->dev, "Max playback channels changed from %d to %d\n", soc_dai->playback.channels_max, val);
 		if (val >= 2 && val <= 8)
 			soc_dai->playback.channels_max = val;
 	}

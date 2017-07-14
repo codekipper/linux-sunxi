@@ -22,6 +22,7 @@
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/io.h>
+#include <linux/of_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/regmap.h>
 #include <linux/log2.h>
@@ -53,6 +54,8 @@
 #define SUN8I_AIF1CLK_CTRL_AIF1_LRCK_INV		13
 #define SUN8I_AIF1CLK_CTRL_AIF1_BCLK_DIV		9
 #define SUN8I_AIF1CLK_CTRL_AIF1_LRCK_DIV		6
+#define SUN8I_AIF1CLK_CTRL_AIF1_LRCK_DIV_16		(1 << 6)
+#define SUN8I_AIF1CLK_CTRL_AIF1_LRCK_DIV_64		(2 << 6)
 #define SUN8I_AIF1CLK_CTRL_AIF1_WORD_SIZ		4
 #define SUN8I_AIF1CLK_CTRL_AIF1_WORD_SIZ_16		(1 << 4)
 #define SUN8I_AIF1CLK_CTRL_AIF1_DATA_FMT		2
@@ -77,6 +80,7 @@
 #define SUN8I_ADC_DIG_CTRL_ADOUT_DLY			1
 #define SUN8I_DAC_DIG_CTRL				0x120
 #define SUN8I_DAC_DIG_CTRL_ENDA			15
+#define SUN8I_DAC_VOL_CTRL				0x124
 #define SUN8I_DAC_MXR_SRC				0x130
 #define SUN8I_DAC_MXR_SRC_DACL_MXR_SRC_AIF1DA0L	15
 #define SUN8I_DAC_MXR_SRC_DACL_MXR_SRC_AIF1DA1L	14
@@ -86,6 +90,7 @@
 #define SUN8I_DAC_MXR_SRC_DACR_MXR_SRC_AIF1DA1R	10
 #define SUN8I_DAC_MXR_SRC_DACR_MXR_SRC_AIF2DACR	9
 #define SUN8I_DAC_MXR_SRC_DACR_MXR_SRC_ADCR		8
+#define SUN8I_DAC_MXR_GAIN				0x134
 
 #define SUN8I_SYS_SR_CTRL_AIF1_FS_MASK		GENMASK(15, 12)
 #define SUN8I_SYS_SR_CTRL_AIF2_FS_MASK		GENMASK(11, 8)
@@ -93,11 +98,21 @@
 #define SUN8I_AIF1CLK_CTRL_AIF1_LRCK_DIV_MASK	GENMASK(8, 6)
 #define SUN8I_AIF1CLK_CTRL_AIF1_BCLK_DIV_MASK	GENMASK(12, 9)
 
+/**
+ * struct sun8i_codec_quirks - Differences between SoC variants.
+ *
+ * @has_reset: SoC needs reset deasserted.
+ */
+struct sun8i_codec_quirks {
+	unsigned int	aif1_lrck_dev;
+};
+
 struct sun8i_codec {
 	struct device	*dev;
 	struct regmap	*regmap;
 	struct clk	*clk_module;
 	struct clk	*clk_bus;
+	const struct sun8i_codec_quirks	*variant;
 };
 
 static int sun8i_codec_runtime_resume(struct device *dev)
@@ -339,7 +354,7 @@ static int sun8i_codec_hw_params(struct snd_pcm_substream *substream,
 
 	regmap_update_bits(scodec->regmap, SUN8I_AIF1CLK_CTRL,
 			   SUN8I_AIF1CLK_CTRL_AIF1_LRCK_DIV_MASK,
-			   lrck_div << SUN8I_AIF1CLK_CTRL_AIF1_LRCK_DIV);
+			   scodec->variant->aif1_lrck_dev);
 
 	sample_rate = sun8i_codec_get_hw_rate(params);
 	if (sample_rate < 0)
@@ -535,9 +550,17 @@ static const struct regmap_config sun8i_codec_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_register	= SUN8I_DAC_MXR_SRC,
+	.max_register	= SUN8I_DAC_MXR_GAIN,
 
 	.cache_type	= REGCACHE_FLAT,
+};
+
+static const struct sun8i_codec_quirks sun8i_a33_codec_quirks = {
+	.aif1_lrck_dev		= SUN8I_AIF1CLK_CTRL_AIF1_LRCK_DIV_16,
+};
+
+static const struct sun8i_codec_quirks sun50i_a64_codec_quirks = {
+	.aif1_lrck_dev		= SUN8I_AIF1CLK_CTRL_AIF1_LRCK_DIV_64,
 };
 
 static int sun8i_codec_probe(struct platform_device *pdev)
@@ -552,6 +575,12 @@ static int sun8i_codec_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	scodec->dev = &pdev->dev;
+
+	scodec->variant = of_device_get_match_data(&pdev->dev);
+	if (!scodec->variant) {
+		dev_err(&pdev->dev, "Failed to determine the quirks to use\n");
+		return -ENODEV;
+	}
 
 	scodec->clk_module = devm_clk_get(&pdev->dev, "mod");
 	if (IS_ERR(scodec->clk_module)) {
@@ -617,7 +646,14 @@ static int sun8i_codec_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id sun8i_codec_of_match[] = {
-	{ .compatible = "allwinner,sun8i-a33-codec" },
+	{
+		.compatible = "allwinner,sun8i-a33-codec",
+		.data = &sun8i_a33_codec_quirks,
+	},
+	{
+		.compatible = "allwinner,sun50i-a64-codec",
+		.data = &sun50i_a64_codec_quirks,
+	},
 	{}
 };
 MODULE_DEVICE_TABLE(of, sun8i_codec_of_match);

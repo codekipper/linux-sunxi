@@ -59,6 +59,7 @@
 #define SUN8I_AIF1_DACDAT_CTRL_AIF1_DA0R_ENA		14
 #define SUN8I_DAC_DIG_CTRL				0x120
 #define SUN8I_DAC_DIG_CTRL_ENDA			15
+#define SUN8I_DAC_VOL_CTRL				0x124
 #define SUN8I_DAC_MXR_SRC				0x130
 #define SUN8I_DAC_MXR_SRC_DACL_MXR_SRC_AIF1DA0L	15
 #define SUN8I_DAC_MXR_SRC_DACL_MXR_SRC_AIF1DA1L	14
@@ -68,6 +69,7 @@
 #define SUN8I_DAC_MXR_SRC_DACR_MXR_SRC_AIF1DA1R	10
 #define SUN8I_DAC_MXR_SRC_DACR_MXR_SRC_AIF2DACR	9
 #define SUN8I_DAC_MXR_SRC_DACR_MXR_SRC_ADCR		8
+#define SUN8I_DAC_MXR_GAIN				0x134
 
 #define SUN8I_SYS_SR_CTRL_AIF1_FS_MASK		GENMASK(15, 12)
 #define SUN8I_SYS_SR_CTRL_AIF2_FS_MASK		GENMASK(11, 8)
@@ -350,6 +352,7 @@ static int sun8i_debug_trigger(struct snd_pcm_substream *substream, int cmd,
 	/* COOPS DEBUGGING FOR NOW */
 	u32 reg_val = 0;
 
+	regmap_write(codec->regmap, SUN8I_DAC_VOL_CTRL, 0xA0A0);
 	printk("Codec Command State %d Audio Clock is %lu\n", cmd, clk_get_rate(codec->clk_module));
 	regmap_read(codec->regmap, SUN8I_SYSCLK_CTL, &reg_val);
 	printk("SUN8I_SYSCLK_CTL 0x%x\n", reg_val);
@@ -365,7 +368,7 @@ static int sun8i_debug_trigger(struct snd_pcm_substream *substream, int cmd,
 	printk("SUN8I_AIF1_DACDAT_CTRL 0x%x\n", reg_val);
 	regmap_read(codec->regmap, SUN8I_DAC_DIG_CTRL, &reg_val);
 	printk("SUN8I_DAC_DIG_CTRL 0x%x\n", reg_val);
-	regmap_read(codec->regmap, 0x324, &reg_val);
+	regmap_read(codec->regmap, SUN8I_DAC_VOL_CTRL, &reg_val);
 	printk("SUN8I_DAC_VOL_CTRL 0x%x\n", reg_val);
 	regmap_read(codec->regmap, SUN8I_DAC_MXR_SRC, &reg_val);
 	printk("SUN8I_DAC_MXR_SRC 0x%x\n", reg_val);
@@ -407,7 +410,7 @@ static const struct regmap_config sun8i_codec_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_register	= SUN8I_DAC_MXR_SRC,
+	.max_register	= SUN8I_DAC_MXR_GAIN,
 
 	.cache_type	= REGCACHE_FLAT,
 };

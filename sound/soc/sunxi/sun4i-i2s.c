@@ -386,7 +386,7 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 	switch (params_width(params)) {
 	case 16:
 		sr = 0;
-		wss = 0;
+		wss = 4;
 		break;
 	case 20:
 		sr = 1;

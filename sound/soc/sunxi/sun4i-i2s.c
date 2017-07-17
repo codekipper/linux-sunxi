@@ -324,7 +324,7 @@ static int sun4i_i2s_set_clk_rate(struct sun4i_i2s *i2s,
 
 	/* Set sync period */
 	if (i2s->variant->has_fmt_set_lrck_period)
-		regmap_field_write(i2s->field_fmt_set_lrck_period, 0x1f);
+		regmap_field_write(i2s->field_fmt_set_lrck_period, word_size - 1);
 
 	return 0;
 }
@@ -406,7 +406,7 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 			   sr + i2s->variant->fmt_adjust);
 
 	return sun4i_i2s_set_clk_rate(i2s, params_rate(params),
-				      params_width(params));
+				      params_physical_width(params));
 }
 
 static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)

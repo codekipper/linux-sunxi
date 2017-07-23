@@ -31,6 +31,7 @@
 #define SUN4I_I2S_CTRL_MODE_MASK		BIT(5)
 #define SUN4I_I2S_CTRL_MODE_SLAVE			(1 << 5)
 #define SUN4I_I2S_CTRL_MODE_MASTER			(0 << 5)
+#define SUN4I_I2S_CTRL_LOOP			BIT(3)
 #define SUN4I_I2S_CTRL_TX_EN			BIT(2)
 #define SUN4I_I2S_CTRL_RX_EN			BIT(1)
 #define SUN4I_I2S_CTRL_GL_EN			BIT(0)
@@ -194,6 +195,8 @@ struct sun4i_i2s {
 	struct regmap_field	*field_rxchansel;
 
 	const struct sun4i_i2s_quirks	*variant;
+
+	bool loopback;
 
 	unsigned int	slot_width;
 };
@@ -622,6 +625,12 @@ static void sun4i_i2s_start_capture(struct sun4i_i2s *i2s)
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_DMA_INT_CTRL_REG,
 			   SUN4I_I2S_DMA_INT_CTRL_RX_DRQ_EN,
 			   SUN4I_I2S_DMA_INT_CTRL_RX_DRQ_EN);
+
+	/* Debugging without codec */
+	if(i2s->loopback)
+		regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
+			   SUN4I_I2S_CTRL_LOOP,
+			   SUN4I_I2S_CTRL_LOOP);
 }
 
 static void sun4i_i2s_start_playback(struct sun4i_i2s *i2s)
@@ -1175,6 +1184,9 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 		if (val >= 2 && val <= 8)
 			soc_dai->playback.channels_max = val;
 	}
+
+	if (of_property_read_bool(pdev->dev.of_node, "loopback"))
+		i2s->loopback = true;
 
 	pm_runtime_enable(&pdev->dev);
 	if (!pm_runtime_enabled(&pdev->dev)) {

@@ -622,6 +622,31 @@
 				function = "i2c2";
 			};
 
+			i2s0_mclk: i2s0@0 {
+				pins = "PB0";
+				function = "i2s0";
+			};
+
+			i2s0_bclk: i2s0@1 {
+				pins = "PB1";
+				function = "i2s0";
+			};
+
+			i2s0_lrclk: i2s0@2 {
+				pins = "PB2";
+				function = "i2s0";
+			};
+
+			i2s0_sdo0: i2s0@3 {
+				pins = "PB3";
+				function ="i2s0";
+			};
+
+			i2s0_sdi: i2s0@4 {
+				pins = "PB7";
+				function = "i2s0";
+			};
+
 			lcd0_rgb888_pins: lcd0_rgb888 {
 				pins = "PD0", "PD1", "PD2", "PD3",
 						 "PD4", "PD5", "PD6", "PD7",

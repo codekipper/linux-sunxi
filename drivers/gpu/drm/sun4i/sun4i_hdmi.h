@@ -16,6 +16,11 @@
 #include <drm/drm_encoder.h>
 #include <linux/regmap.h>
 
+#include <sound/dmaengine_pcm.h>
+#include <sound/pcm_drm_eld.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+
 #include <media/cec-pin.h>
 
 #define SUN4I_HDMI_CTRL_REG		0x004
@@ -45,6 +50,67 @@
 #define SUN4I_HDMI_VID_TIMING_POL_TX_CLK        (0x3e0 << 16)
 #define SUN4I_HDMI_VID_TIMING_POL_VSYNC		BIT(1)
 #define SUN4I_HDMI_VID_TIMING_POL_HSYNC		BIT(0)
+
+#define	SUN4I_HDMI_AUD_CTL		0x040
+#define SUN4I_HDMI_AUD_CTL_GEN			BIT(31)
+#define SUN4I_HDMI_AUD_CTL_RESET		BIT(30)
+
+#define SUN4I_HDMI_ADMA_CTL		0x044
+#define SUN4I_HDMI_ADMA_CTL_1_NORMAL_DMA	BIT(31)
+#define SUN4I_HDMI_ADMA_CTL_DMA_REQ		GENMASK(25, 24)
+#define SUN4I_HDMI_ADMA_CTL_HALF_EMPTY		(0 << 24)
+#define SUN4I_HDMI_ADMA_CTL_QUARTER_EMPTY	(1 << 24)
+#define SUN4I_HDMI_ADMA_CTL_EIGHTH_EMPTY	(2 << 24)
+#define SUN4I_HDMI_ADMA_CTL_1_SAMPLE		BIT(19)
+#define SUN4I_HDMI_ADMA_CTL_MSB			BIT(18)
+#define SUN4I_HDMI_ADMA_CTL_FMTRVD		GENMASK(17, 16)
+#define SUN4I_HDMI_ADMA_CTL_FMT16BIT		(0 << 16)
+#define SUN4I_HDMI_ADMA_CTL_FMT20BIT		(1 << 16)
+#define SUN4I_HDMI_ADMA_CTL_FMT24BIT		(2 << 16)
+#define SUN4I_HDMI_ADMA_CTL_FTX			BIT(15)
+#define SUN4I_HDMI_ADMA_CTL_ASS			BIT(0)
+
+#define SUN4I_HDMI_AUDIO_FMT		0x048
+#define SUN4I_HDMI_AUDIO_FMT_FROM_ASG		BIT(31)
+#define SUN4I_HDMI_AUDIO_FMT_SEL		GENMASK(26, 24)
+#define SUN4I_HDMI_AUDIO_FMT_LPCM		(0 << 24)
+#define SUN4I_HDMI_AUDIO_FMT_COMPRESSED		(1 << 24)
+#define SUN4I_HDMI_AUDIO_FMT_HDR		(2 << 24)
+#define SUN4I_HDMI_AUDIO_FMT_1BIT		(3 << 24)
+#define SUN4I_HDMI_AUDIO_FMT_DSD_FMT		BIT(4)
+#define SUN4I_HDMI_AUDIO_FMT_AUD_LAYOUT		BIT(3)
+#define SUN4I_HDMI_AUDIO_FMT_SRC_CH_CFG		GENMASK(2, 0)
+#define SUN4I_HDMI_AUDIO_FMT_CH_NUMBER(v)	((v-1) << 0)
+
+#define SUN4I_HDMI_AUD_PCM_CTL		0x04C
+
+#define SUN4I_HDMI_AUD_CTS		0x050
+#define SUN4I_HDMI_AUD_CTS_GEN			GENMASK(19, 0)
+
+#define SUN4I_HDMI_AUD_N		0x054
+#define SUN4I_HDMI_AUD_CTS_GEN			GENMASK(19, 0)
+
+#define SUN4I_HDMI_AUD_CH_STAT0		0x058
+#define SUN4I_HDMI_AUD_CH_STAT0_CHNL_BIT1	BIT(30)
+#define SUN4I_HDMI_AUD_CH_STAT0_CLK_ACCUR	BIT(28)
+#define SUN4I_HDMI_AUD_CH_STAT0_SAMFREQ(v)	((v) << 24)
+#define SUN4I_HDMI_AUD_CH_STAT0_SAMFREQ_MASK	GENMASK(27, 24)
+#define SUN4I_HDMI_AUD_CH_STAT0_CHNUM_MASK	GENMASK(23, 20)
+#define SUN4I_HDMI_AUD_CH_STAT0_SRCNUM_MASK	GENMASK(19, 16)
+#define SUN4I_HDMI_AUD_CH_STAT0_CATCODE_MASK	GENMASK(15, 8)
+#define SUN4I_HDMI_AUD_CH_STAT0_MODE_MASK	GENMASK(7, 6)
+#define SUN4I_HDMI_AUD_CH_STAT0_EMPHASIS_MASK	GENMASK(5, 3)
+#define SUN4I_HDMI_AUD_CH_STAT0_CP		BIT(2)
+#define SUN4I_HDMI_AUD_CH_STAT0_AUDIO		BIT(1)
+#define SUN4I_HDMI_AUD_CH_STAT0_PRO		BIT(0)
+
+#define SUN4I_HDMI_AUD_CH_STAT1		0x05C
+#define SUN4I_HDMI_AUD_CH_STAT1_CGMSA(v)		((v) << 8)
+#define SUN4I_HDMI_AUD_CH_STAT1_ORISAMFREQ(v)	((v) << 4)
+#define SUN4I_HDMI_AUD_CH_STAT1_ORISAMFREQ_MASK	GENMASK(7, 4)
+#define SUN4I_HDMI_AUD_CH_STAT1_SAMWORDLEN(v)	((v) << 1)
+#define SUN4I_HDMI_AUD_CH_STAT1_SAMWORDLEN_MASK	GENMASK(3, 1)
+#define SUN4I_HDMI_AUD_CH_STAT1_MAXWORDLEN		BIT(0)
 
 #define SUN4I_HDMI_AVI_INFOFRAME_REG(n)	(0x080 + (n))
 
@@ -107,6 +173,8 @@
 
 #define SUN4I_HDMI_UNKNOWN_REG		0x300
 #define SUN4I_HDMI_UNKNOWN_INPUT_SYNC		BIT(27)
+
+#define SUN4I_HDMI_TXFIFO		0x400
 
 #define SUN4I_HDMI_DDC_CTRL_REG		0x500
 #define SUN4I_HDMI_DDC_CTRL_ENABLE		BIT(31)
@@ -246,6 +314,18 @@ struct sun4i_hdmi_variant {
 	bool			ddc_fifo_has_dir;
 };
 
+struct hdmi_audio_params {
+	struct snd_soc_card card;
+	struct snd_soc_dai_link link;
+	struct snd_dmaengine_dai_dma_data dma_data;
+	struct snd_pcm_substream *substream;
+	int channels;
+	bool enabled;
+	unsigned int sample_width;
+	unsigned int sample_rate;
+	struct hdmi_audio_infoframe cea;
+};
+
 struct sun4i_hdmi {
 	struct drm_connector	connector;
 	struct drm_encoder	encoder;
@@ -292,6 +372,9 @@ struct sun4i_hdmi {
 	struct cec_adapter	*cec_adap;
 
 	const struct sun4i_hdmi_variant	*variant;
+
+	struct platform_device	*audio_pdev;
+	struct hdmi_audio_params audio;
 };
 
 int sun4i_ddc_create(struct sun4i_hdmi *hdmi, struct clk *clk);

@@ -83,6 +83,44 @@
 			sound-dai = <&pcm5102>;
 		};
 	};
+
+	i2s1_in: i2s1-in {
+                #sound-dai-cells = <0>;
+                compatible = "linux,spdif-dir";
+        };
+
+        i2s1_out: i2s1-out {
+                #sound-dai-cells = <0>;
+                compatible = "linux,spdif-dit";
+        };
+
+	sound_i2s1 {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,mclk-fs = <256>;
+
+		simple-audio-card,dai-link@0 {
+                        format = "i2s";
+			cpu {
+				sound-dai = <&i2s1>;
+			};
+
+			codec {
+				sound-dai = <&i2s1_out>;
+			};
+		};
+
+		simple-audio-card,dai-link@1 {
+                        format = "i2s";
+			cpu {
+				sound-dai = <&i2s1>;
+			};
+
+			codec {
+				sound-dai = <&i2s1_in>;
+			};
+		};
+	};
 };
 
 &codec {
@@ -131,6 +169,11 @@
 	allwinner,slot-width-override = <32>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2s0_bclk>, <&i2s0_lrclk>, <&i2s0_mclk>, <&i2s0_sdo0>;
+	status = "okay";
+};
+
+&i2s1 {
+	loopback;
 	status = "okay";
 };
 

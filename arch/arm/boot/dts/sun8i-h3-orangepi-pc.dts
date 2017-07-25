@@ -173,6 +173,7 @@
 	};
 };
 
+<<<<<<< HEAD
 &i2c0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c0_pins>;
@@ -192,6 +193,8 @@
 	status = "okay";
 };
 
+=======
+>>>>>>> upstream/sunxi-audio-h3
 &ir {
 	pinctrl-names = "default";
 	pinctrl-0 = <&ir_pins_a>;

@@ -45,7 +45,10 @@
 
 #include <dt-bindings/thermal/thermal.h>
 
+<<<<<<< HEAD
 #include <dt-bindings/clock/sun4i-a10-ccu.h>
+=======
+>>>>>>> upstream/sunxi-audio-h3
 #include <dt-bindings/dma/sun4i-a10.h>
 
 / {

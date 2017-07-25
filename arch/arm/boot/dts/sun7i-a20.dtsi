@@ -621,6 +621,7 @@
 			reg = <0x01c18000 0x1000>;
 			interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu 49>, <&ccu 122>;
+<<<<<<< HEAD
 			status = "disabled";
 		};
 
@@ -628,6 +629,8 @@
 			compatible = "allwinner,sun4i-a10-tv-encoder";
 			reg = <0x01c1b000 0x1000>;
 			clocks = <&ccu CLK_AHB_TVE1>;
+=======
+>>>>>>> upstream/sunxi-audio-h3
 			status = "disabled";
 
 			port {
@@ -1289,6 +1292,7 @@
 			#interrupt-cells = <3>;
 			interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_HIGH)>;
 		};
+<<<<<<< HEAD
 
 		fe0: display-frontend@01e00000 {
 			compatible = "allwinner,sun5i-a13-display-frontend";
@@ -1435,5 +1439,7 @@
 		reg = <2>;
 		remote-endpoint = <&hdmi0_in_tcon0>;
 		allwinner,tcon-channel = <1>;
+=======
+>>>>>>> upstream/sunxi-audio-h3
 	};
 };

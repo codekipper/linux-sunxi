@@ -45,6 +45,10 @@
 
 #include <dt-bindings/thermal/thermal.h>
 
+<<<<<<< HEAD
+#include <dt-bindings/clock/sun4i-a10-ccu.h>
+=======
+>>>>>>> upstream/sunxi-audio-h3
 #include <dt-bindings/dma/sun4i-a10.h>
 
 / {
@@ -556,6 +560,16 @@
 				bias-pull-up;
 			};
 
+			spdif_rx_pins_a: spdif@1 {
+				pins = "PB12";
+				function = "spdif";
+			};
+
+			spdif_mclk_pins_a: spdif@2 {
+				pins = "PB03";
+				function = "spdif";
+			};
+
 			spi0_pins_a: spi0@0 {
 				pins = "PI11", "PI12", "PI13";
 				function = "spi0";
@@ -610,6 +624,31 @@
 				pins = "PA10", "PA11";
 				function = "uart1";
 			};
+
+			i2s_mclk: i2s0@0 {
+				pins = "PB5";
+				function = "i2s0";
+			};
+
+			i2s_bclk: i2s0@1 {
+				pins = "PB6";
+				function = "i2s0";
+			};
+
+			i2s_lrclk: i2s0@2 {
+				pins = "PB7";
+				function = "i2s0";
+			};
+
+			i2s_sdo0: i2s0@3 {
+				pins = "PB8";
+				function = "i2s0";
+			};
+
+			i2s_sdi: i2s0@4 {
+				pins = "PB12";
+				function = "i2s0";
+			};
 		};
 
 		timer@01c20c00 {
@@ -648,6 +687,8 @@
 			dmas = <&dma SUN4I_DMA_NORMAL 2>,
 			       <&dma SUN4I_DMA_NORMAL 2>;
 			dma-names = "rx", "tx";
+			spdif-in = "disabled";
+			spdif-out = "okay";
 			status = "disabled";
 		};
 
@@ -666,6 +707,18 @@
 			clock-names = "apb", "ir";
 			interrupts = <6>;
 			reg = <0x01c21c00 0x40>;
+			status = "disabled";
+		};
+
+		i2s: i2s@01c22400 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun4i-a10-i2s";
+			reg = <0x01c22400 0x400>;
+			interrupts = <16>;
+			clocks = <&ccu CLK_APB0_I2S0>, <&ccu CLK_I2S0>;
+			clock-names = "apb", "mod";
+			dmas = <&dma 0 3>, <&dma 0 3>;
+			dma-names = "rx", "tx";
 			status = "disabled";
 		};
 

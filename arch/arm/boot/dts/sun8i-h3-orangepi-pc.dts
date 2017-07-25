@@ -99,6 +99,33 @@
 			gpios = <&r_pio 0 3 GPIO_ACTIVE_LOW>;
 		};
 	};
+
+	sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "AudioInjector audio";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,bitclock-master = <&codec_master>;
+		simple-audio-card,frame-master = <&codec_master>;
+		simple-audio-card,widgets =
+					"Headphone", "Headphone Jack",
+					"Microphone", "Microphone Jack",
+					"Line", "Line Jack";
+		simple-audio-card,routing =
+					"Headphone Jack", "RHPOUT",
+					"Headphone Jack", "LHPOUT",
+					"LLINEIN", "Line Jack",
+					"MICIN", "Mic Bias",
+					"Mic Bias", "Microphone Jack";
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+
+		codec_master: simple-audio-card,codec {
+			sound-dai = <&wm8731>;
+			system-clock-frequency = <12000000>;
+		};
+	};
 };
 
 &codec {
@@ -146,6 +173,28 @@
 	};
 };
 
+<<<<<<< HEAD
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	status = "okay";
+
+	wm8731: wm8731@1a {
+		#sound-dai-cells = <0>;
+		compatible = "wlf,wm8731";
+		reg = <0x1a>;
+		status = "okay";
+	};
+};
+
+&i2s0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2s0_bclk> , <&i2s0_lrclk> , <&i2s0_sdo0>, <&i2s0_sdi>;
+	status = "okay";
+};
+
+=======
+>>>>>>> upstream/sunxi-audio-h3
 &ir {
 	pinctrl-names = "default";
 	pinctrl-0 = <&ir_pins_a>;

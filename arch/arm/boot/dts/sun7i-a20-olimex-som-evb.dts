@@ -100,6 +100,10 @@
 	status = "okay";
 };
 
+&be0 {
+	status = "okay";
+};
+
 &ehci0 {
 	status = "okay";
 };
@@ -126,6 +130,10 @@
 	phy1: ethernet-phy@1 {
 		reg = <1>;
 	};
+};
+
+&hdmi0 {
+	status = "okay";
 };
 
 &i2c0 {
@@ -329,6 +337,10 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&spi2_pins_a>,
 		    <&spi2_cs0_pins_a>;
+	status = "okay";
+};
+
+&tcon0 {
 	status = "okay";
 };
 

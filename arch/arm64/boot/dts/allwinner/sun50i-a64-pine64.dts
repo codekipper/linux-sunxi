@@ -107,6 +107,17 @@
 		#sound-dai-cells = <0>;
 		compatible = "linux,spdif-dit";
 	};
+<<<<<<< HEAD
+};
+
+&codec {
+	status = "okay";
+};
+
+&dai {
+	status = "okay";
+=======
+>>>>>>> upstream/sunxi-audio-h3
 };
 
 &ehci0 {
@@ -177,6 +188,13 @@
 	};
 };
 
+<<<<<<< HEAD
+&sound {
+	status = "okay";
+};
+
+=======
+>>>>>>> upstream/sunxi-audio-h3
 &spdif {
 	pinctrl-names = "default";
 	pinctrl-0 = <&spdif_tx_pins_a>;

@@ -153,6 +153,7 @@
 };
 
 &hdmi {
+	#sound-dai-cells = <0>;
 	hvcc-supply = <&reg_dldo1>;
 	status = "okay";
 };
@@ -174,6 +175,10 @@
 
 &i2s1 {
 	loopback;
+	status = "okay";
+};
+
+&i2s2 {
 	status = "okay";
 };
 

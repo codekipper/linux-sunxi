@@ -130,6 +130,7 @@
 };
 
 &hdmi {
+	#sound-dai-cells = <0>;
 	hvcc-supply = <&reg_dldo1>;
 	status = "okay";
 };
@@ -138,6 +139,10 @@
 	hdmi_out_con: endpoint {
 		remote-endpoint = <&hdmi_con_in>;
 	};
+};
+
+&hdmi_sound {
+	status = "okay";
 };
 
 &i2c1 {
@@ -151,6 +156,10 @@
 &i2s0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2s0_bclk>, <&i2s0_lrclk>, <&i2s0_mclk>, <&i2s0_sdo0>;
+	status = "okay";
+};
+
+&i2s2 {
 	status = "okay";
 };
 

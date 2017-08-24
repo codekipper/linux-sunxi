@@ -89,6 +89,7 @@
 };
 
 &hdmi {
+	#sound-dai-cells = <0>;
 	hvcc-supply = <&reg_dldo1>;
 	status = "okay";
 };
@@ -99,12 +100,20 @@
 	};
 };
 
+&hdmi_sound {
+	status = "okay";
+};
+
 &i2c1 {
 	status = "okay";
 };
 
 &i2c1_pins {
 	bias-pull-up;
+};
+
+&i2s2 {
+	status = "okay";
 };
 
 &mdio {

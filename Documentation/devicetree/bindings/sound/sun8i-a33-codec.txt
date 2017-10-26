@@ -16,7 +16,9 @@ On Sun8i-A33 SoCs, the audio is separated in different parts:
 This bindings documentation exposes Sun8i codec (digital part).
 
 Required properties:
-- compatible: must be "allwinner,sun8i-a33-codec"
+- compatible: should be one of the following:
+   - "allwinner,sun8i-a33-codec"
+   - "allwinner,sun50i-a64-codec"
 - reg: must contain the registers location and length
 - interrupts: must contain the codec interrupt
 - clocks: a list of phandle + clock-specifer pairs, one for each entry

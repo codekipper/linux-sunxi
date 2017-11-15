@@ -132,6 +132,44 @@
 		};
 	};
 
+        i2s1_in: cs4271-in {
+                #sound-dai-cells = <0>;
+		compatible = "linux,spdif-dir";
+        };
+
+        i2s1_out: cs4271-out {
+                #sound-dai-cells = <0>;
+		compatible = "linux,spdif-dit";
+        };
+
+	sound_i2s1 {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,mclk-fs = <128>;
+
+		simple-audio-card,dai-link@0 {
+                        format = "i2s";
+			cpu {
+				sound-dai = <&i2s1>;
+			};
+
+			codec {
+				sound-dai = <&i2s1_out>;
+			};
+		};
+
+		simple-audio-card,dai-link@1 {
+                        format = "i2s";
+			cpu {
+				sound-dai = <&i2s1>;
+			};
+
+			codec {
+				sound-dai = <&i2s1_in>;
+			};
+		};
+	};
+
 	wifi_pwrseq: wifi_pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		reset-gpios = <&r_pio 0 7 GPIO_ACTIVE_LOW>; /* PL7 WIFI_EN */
@@ -205,6 +243,11 @@
 &i2s1 {
 	loopback;
 >>>>>>> 750766131e5c... fixup! DEMO - i2s on H3 with uda1380 for OPi2
+	status = "okay";
+};
+
+&i2s1 {
+	loopback;
 	status = "okay";
 };
 

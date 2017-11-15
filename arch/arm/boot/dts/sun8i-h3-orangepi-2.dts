@@ -136,6 +136,44 @@
 		};
 	};
 
+        i2s1_in: cs4271-in {
+                #sound-dai-cells = <0>;
+		compatible = "linux,spdif-dir";
+        };
+
+        i2s1_out: cs4271-out {
+                #sound-dai-cells = <0>;
+		compatible = "linux,spdif-dit";
+        };
+
+	sound_i2s1 {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,mclk-fs = <128>;
+
+		simple-audio-card,dai-link@0 {
+                        format = "i2s";
+			cpu {
+				sound-dai = <&i2s1>;
+			};
+
+			codec {
+				sound-dai = <&i2s1_out>;
+			};
+		};
+
+		simple-audio-card,dai-link@1 {
+                        format = "i2s";
+			cpu {
+				sound-dai = <&i2s1>;
+			};
+
+			codec {
+				sound-dai = <&i2s1_in>;
+			};
+		};
+	};
+
 	wifi_pwrseq: wifi_pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		pinctrl-names = "default";
@@ -205,6 +243,11 @@
 &i2s0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2s0_bclk> , <&i2s0_lrclk> , <&i2s0_sdo0>;
+	status = "okay";
+};
+
+&i2s1 {
+	loopback;
 	status = "okay";
 };
 

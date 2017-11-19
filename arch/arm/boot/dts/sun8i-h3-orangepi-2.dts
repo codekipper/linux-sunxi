@@ -107,7 +107,28 @@
 			gpios = <&r_pio 0 3 GPIO_ACTIVE_LOW>;
 		};
 	};
+#if 1
+	/* This should be a es9023 but this driver should work */
+        pcm5102: pcm510x {
+                compatible = "ti,pcm5102a";
+                pcm510x,format = "i2s";
+                #sound-dai-cells = <0>;
+        };
 
+	sound_i2s {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,mclk-fs = <256>;
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&pcm5102>;
+		};
+	};
+#else
 	sound {
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "i2s";
@@ -135,7 +156,7 @@
 			sound-dai = <&ext_codec>;
 		};
 	};
-
+#endif
         i2s1_in: cs4271-in {
                 #sound-dai-cells = <0>;
 		compatible = "linux,spdif-dir";
@@ -223,7 +244,6 @@
 &i2c0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c0_pins>;
-	status = "okay";
 
 	/* added for test with I2S waveshare codec board based on UDA1380 */
 	ext_codec: uda1380@18 {

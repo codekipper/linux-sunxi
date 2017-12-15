@@ -129,31 +129,31 @@
 		};
 	};
 #else
-	sound {
+	sound_i2s {
 		compatible = "simple-audio-card";
+		simple-audio-card,name = "AudioInjector audio";
 		simple-audio-card,format = "i2s";
-		simple-audio-card,routing =
-			"Headphone Jack", "VOUTLHP",
-			"Headphone Jack", "VOUTRHP",
-			"Line Out Jack", "VOUTL",
-			"Line Out Jack", "VOUTR",
-			"VINM", "Mic Jack",
-			"VINL", "Line In Jack",
-			"VINR", "Line In Jack";
+		simple-audio-card,bitclock-master = <&codec_master>;
+		simple-audio-card,frame-master = <&codec_master>;
 		simple-audio-card,widgets =
-			"Headphone", "Headphone Jack",
-			"Line", "Line In Jack",
-			"Line", "Line Out Jack",
-			"Microphone", "Mic Jack";
-
-		simple-audio-card,mclk-fs = <256>;
+					"Headphone", "Headphone Jack",
+					"Microphone", "Microphone Jack",
+					"Line", "Line Jack";
+		simple-audio-card,routing =
+					"Headphone Jack", "RHPOUT",
+					"Headphone Jack", "LHPOUT",
+					"LLINEIN", "Line Jack",
+					"MICIN", "Mic Bias",
+					"Mic Bias", "Microphone Jack";
 
 		simple-audio-card,cpu {
 			sound-dai = <&i2s0>;
+			system-clock-frequency = <12000000>;
 		};
 
-		simple-audio-card,codec {
-			sound-dai = <&ext_codec>;
+		codec_master: simple-audio-card,codec {
+			sound-dai = <&wm8731>;
+			system-clock-frequency = <12000000>;
 		};
 	};
 #endif
@@ -258,11 +258,19 @@
 		 */
 		dac-clk = <1>; // SYSCLK=0, WSPLL=1
 	};
+
+	wm8731: wm8731@1a {
+		#sound-dai-cells = <0>;
+		compatible = "wlf,wm8731";
+		reg = <0x1a>;
+		status = "okay";
+	};
 };
 
 &i2s0 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&i2s0_bclk> , <&i2s0_lrclk> , <&i2s0_sdo0>;
+	pinctrl-0 = <&i2s0_bclk> , <&i2s0_lrclk> , <&i2s0_sdo0>, <&i2s0_sdi>;
+	allwinner,slot-width-override = <32>;
 	status = "okay";
 };
 

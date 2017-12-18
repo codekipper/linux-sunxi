@@ -194,6 +194,8 @@ struct sun4i_i2s {
 	struct regmap_field	*field_rxchansel;
 
 	const struct sun4i_i2s_quirks	*variant;
+
+	bool bit_clk_master;
 };
 
 struct sun4i_i2s_clk_div {
@@ -298,82 +300,86 @@ static int sun4i_i2s_set_clk_rate(struct snd_soc_dai *dai,
 	int bclk_div, mclk_div;
 	int ret;
 
-	switch (rate) {
-	case 176400:
-	case 88200:
-	case 44100:
-	case 22050:
-	case 11025:
-		clk_rate = 22579200;
-		break;
+	if (i2s->bit_clk_master) {
+		switch (rate) {
+		case 176400:
+		case 88200:
+		case 44100:
+		case 22050:
+		case 11025:
+			clk_rate = 22579200;
+			break;
 
-	case 192000:
-	case 128000:
-	case 96000:
-	case 64000:
-	case 48000:
-	case 32000:
-	case 24000:
-	case 16000:
-	case 12000:
-	case 8000:
-		clk_rate = 24576000;
-		break;
+		case 192000:
+		case 128000:
+		case 96000:
+		case 64000:
+		case 48000:
+		case 32000:
+		case 24000:
+		case 16000:
+		case 12000:
+		case 8000:
+			clk_rate = 24576000;
+			break;
 
-	default:
-		dev_err(dai->dev, "Unsupported sample rate: %u\n", rate);
-		return -EINVAL;
+		default:
+			dev_err(dai->dev, "Unsupported sample rate: %u\n", rate);
+			return -EINVAL;
+		}
+
+		ret = clk_set_rate(i2s->mod_clk, clk_rate);
+		if (ret) {
+			dev_err(dai->dev, "Unable to set clock\n");
+			return ret;
+		}
+
+		oversample_rate = i2s->mclk_freq / rate;
+		if (!sun4i_i2s_oversample_is_valid(oversample_rate)) {
+			dev_err(dai->dev, "Unsupported oversample rate: %d\n",
+				oversample_rate);
+			return -EINVAL;
+		}
+
+		if (i2s->variant->has_fmt_set_lrck_period)
+			bclk_div = sun4i_i2s_get_bclk_div(i2s, clk_rate / rate,
+							  word_size,
+							  sun8i_i2s_clk_div,
+							  ARRAY_SIZE(sun8i_i2s_clk_div));
+		else
+			bclk_div = sun4i_i2s_get_bclk_div(i2s, oversample_rate,
+							  word_size,
+							  sun4i_i2s_bclk_div,
+							  ARRAY_SIZE(sun4i_i2s_bclk_div));
+		if (bclk_div < 0) {
+			dev_err(dai->dev, "Unsupported BCLK divider: %d\n",
+				bclk_div);
+			return -EINVAL;
+		}
+
+
+		if (i2s->variant->has_fmt_set_lrck_period)
+			mclk_div = sun4i_i2s_get_mclk_div(i2s, oversample_rate,
+							  clk_rate, rate,
+							  sun8i_i2s_clk_div,
+							  ARRAY_SIZE(sun8i_i2s_clk_div));
+		else
+			mclk_div = sun4i_i2s_get_mclk_div(i2s, oversample_rate,
+							  clk_rate, rate,
+							  sun4i_i2s_mclk_div,
+							  ARRAY_SIZE(sun4i_i2s_mclk_div));
+		if (mclk_div < 0) {
+			dev_err(dai->dev, "Unsupported MCLK divider: %d\n",
+				mclk_div);
+			return -EINVAL;
+		}
+
+		regmap_write(i2s->regmap, SUN4I_I2S_CLK_DIV_REG,
+			     SUN4I_I2S_CLK_DIV_BCLK(bclk_div) |
+			     SUN4I_I2S_CLK_DIV_MCLK(mclk_div));
+
+		regmap_field_write(i2s->field_clkdiv_mclk_en, 1);
 	}
-
-	ret = clk_set_rate(i2s->mod_clk, clk_rate);
-	if (ret)
-		return ret;
-
-	oversample_rate = i2s->mclk_freq / rate;
-	if (!sun4i_i2s_oversample_is_valid(oversample_rate)) {
-		dev_err(dai->dev, "Unsupported oversample rate: %d\n",
-			oversample_rate);
-		return -EINVAL;
-	}
-
-	if (i2s->variant->has_fmt_set_lrck_period)
-		bclk_div = sun4i_i2s_get_bclk_div(i2s, clk_rate / rate,
-						  word_size,
-						  sun8i_i2s_clk_div,
-						  ARRAY_SIZE(sun8i_i2s_clk_div));
-	else
-		bclk_div = sun4i_i2s_get_bclk_div(i2s, oversample_rate,
-						  word_size,
-						  sun4i_i2s_bclk_div,
-						  ARRAY_SIZE(sun4i_i2s_bclk_div));
-	if (bclk_div < 0) {
-		dev_err(dai->dev, "Unsupported BCLK divider: %d\n",
-			bclk_div);
-		return -EINVAL;
-	}
-
-
-	if (i2s->variant->has_fmt_set_lrck_period)
-		mclk_div = sun4i_i2s_get_mclk_div(i2s, oversample_rate,
-						  clk_rate, rate,
-						  sun8i_i2s_clk_div,
-						  ARRAY_SIZE(sun8i_i2s_clk_div));
-	else
-		mclk_div = sun4i_i2s_get_mclk_div(i2s, oversample_rate,
-						  clk_rate, rate,
-						  sun4i_i2s_mclk_div,
-						  ARRAY_SIZE(sun4i_i2s_mclk_div));
-	if (mclk_div < 0) {
-		dev_err(dai->dev, "Unsupported MCLK divider: %d\n",
-			mclk_div);
-		return -EINVAL;
-	}
-
-	regmap_write(i2s->regmap, SUN4I_I2S_CLK_DIV_REG,
-		     SUN4I_I2S_CLK_DIV_BCLK(bclk_div) |
-		     SUN4I_I2S_CLK_DIV_MCLK(mclk_div));
-
-	regmap_field_write(i2s->field_clkdiv_mclk_en, 1);
 
 	/* Set sync period */
 	if (i2s->variant->has_fmt_set_lrck_period)
@@ -574,10 +580,12 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		case SND_SOC_DAIFMT_CBS_CFS:
 			/* BCLK and LRCLK master */
 			val = SUN4I_I2S_CTRL_MODE_MASTER;
+			i2s->bit_clk_master = true;
 			break;
 		case SND_SOC_DAIFMT_CBM_CFM:
 			/* BCLK and LRCLK slave */
 			val = SUN4I_I2S_CTRL_MODE_SLAVE;
+			i2s->bit_clk_master = false;
 			break;
 		default:
 			dev_err(dai->dev, "Unsupported slave setting: %d\n",
@@ -598,10 +606,12 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			/* BCLK and LRCLK master */
 			val = SUN8I_I2S_CTRL_BCLK_OUT |
 				SUN8I_I2S_CTRL_LRCK_OUT;
+			i2s->bit_clk_master = true;
 			break;
 		case SND_SOC_DAIFMT_CBM_CFM:
 			/* BCLK and LRCLK slave */
 			val = 0;
+			i2s->bit_clk_master = false;
 			break;
 		default:
 			dev_err(dai->dev, "Unsupported slave setting: %d\n",

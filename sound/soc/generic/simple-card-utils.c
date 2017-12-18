@@ -312,6 +312,7 @@ int asoc_simple_card_init_dai(struct snd_soc_dai *dai,
 	int ret;
 
 	if (simple_dai->sysclk) {
+		printk("COOPS %s freq %d\n", __func__, simple_dai->sysclk);
 		ret = snd_soc_dai_set_sysclk(dai, 0, simple_dai->sysclk,
 					     simple_dai->clk_direction);
 		if (ret && ret != -ENOTSUPP) {

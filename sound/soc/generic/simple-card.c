@@ -153,12 +153,14 @@ static int asoc_simple_card_hw_params(struct snd_pcm_substream *substream,
 		mclk_fs = dai_props->mclk_fs;
 
 	if (mclk_fs) {
+		printk("COOPS %s freq %d\n", __func__, mclk_fs);
 		mclk = params_rate(params) * mclk_fs;
 		ret = snd_soc_dai_set_sysclk(codec_dai, 0, mclk,
 					     SND_SOC_CLOCK_IN);
 		if (ret && ret != -ENOTSUPP)
 			goto err;
 
+		printk("COOPS %s freq %d\n", __func__, mclk);
 		ret = snd_soc_dai_set_sysclk(cpu_dai, 0, mclk,
 					     SND_SOC_CLOCK_OUT);
 		if (ret && ret != -ENOTSUPP)
@@ -166,6 +168,7 @@ static int asoc_simple_card_hw_params(struct snd_pcm_substream *substream,
 	}
 	return 0;
 err:
+	printk("COOPS %s BAD\n", __func__);
 	return ret;
 }
 

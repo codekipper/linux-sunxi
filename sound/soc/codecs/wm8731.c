@@ -214,6 +214,7 @@ static int wm8731_check_osc(struct snd_soc_dapm_widget *source,
 	struct snd_soc_component *component = snd_soc_dapm_to_component(source->dapm);
 	struct wm8731_priv *wm8731 = snd_soc_component_get_drvdata(component);
 
+	printk("COOPS %s source %s sink %s sysclk is %d\n", __func__, source->name, sink->name, wm8731->sysclk_type);
 	return wm8731->sysclk_type == WM8731_SYSCLK_XTAL;
 }
 
@@ -363,6 +364,13 @@ static int wm8731_hw_params(struct snd_pcm_substream *substream,
 	wm8731_set_deemph(component);
 
 	snd_soc_component_write(component, WM8731_IFACE, iface);
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_APANA, snd_soc_component_read32(component, WM8731_APANA) );
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_APDIGI, snd_soc_component_read32(component, WM8731_APDIGI) );
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_PWR, snd_soc_component_read32(component, WM8731_PWR) );
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_IFACE, snd_soc_component_read32(component, WM8731_IFACE) );
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_SRATE, snd_soc_component_read32(component, WM8731_SRATE) );
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_ACTIVE, snd_soc_component_read32(component, WM8731_ACTIVE) );
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_RESET, snd_soc_component_read32(component, WM8731_RESET) );
 	return 0;
 }
 
@@ -371,10 +379,15 @@ static int wm8731_mute(struct snd_soc_dai *dai, int mute)
 	struct snd_soc_component *component = dai->component;
 	u16 mute_reg = snd_soc_component_read32(component, WM8731_APDIGI) & 0xfff7;
 
+	printk("COOPS %s mute is %d\n", __func__, mute);
 	if (mute)
 		snd_soc_component_write(component, WM8731_APDIGI, mute_reg | 0x8);
 	else
 		snd_soc_component_write(component, WM8731_APDIGI, mute_reg);
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_APANA, snd_soc_component_read32(component, WM8731_APANA) );
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_APDIGI, snd_soc_component_read32(component, WM8731_APDIGI) );
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_PWR, snd_soc_component_read32(component, WM8731_PWR) );
+	printk("COOPS %s reg is 0x%x value read back is 0x%x\n", __func__,WM8731_ACTIVE, snd_soc_component_read32(component, WM8731_ACTIVE) );
 	return 0;
 }
 
@@ -385,9 +398,12 @@ static int wm8731_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
 	struct wm8731_priv *wm8731 = snd_soc_component_get_drvdata(component);
 
+	printk("COOPS %s clk_id %d freq %d dir %d\n", __func__, clk_id, freq, dir);
+	printk("COOPS %s mclk is 0x%x\n", __func__, wm8731->mclk);
 	switch (clk_id) {
 	case WM8731_SYSCLK_XTAL:
 	case WM8731_SYSCLK_MCLK:
+		//clk_id = WM8731_SYSCLK_XTAL;
 		if (wm8731->mclk && clk_set_rate(wm8731->mclk, freq))
 			return -EINVAL;
 		wm8731->sysclk_type = clk_id;
@@ -417,6 +433,7 @@ static int wm8731_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 
 	wm8731->sysclk = freq;
 
+	printk("COOPS %s constraints is 0x%x\n", __func__, wm8731->constraints);
 	snd_soc_dapm_sync(dapm);
 
 	return 0;
@@ -432,9 +449,11 @@ static int wm8731_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	/* set master/slave audio interface */
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 	case SND_SOC_DAIFMT_CBM_CFM:
+		printk("COOPS %s CODEC MASTER\n", __func__);
 		iface |= 0x0040;
 		break;
 	case SND_SOC_DAIFMT_CBS_CFS:
+		printk("COOPS %s CODEC SLAVE\n", __func__);
 		break;
 	default:
 		return -EINVAL;

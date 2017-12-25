@@ -392,10 +392,17 @@ static int sun4i_i2s_set_clk_rate(struct snd_soc_dai *dai,
 	}
 
 	/* Set sync period */
-	if (i2s->variant->has_fmt_set_lrck_period)
+	if (i2s->variant->has_fmt_set_lrck_period) {
+		int lrck;
+		if (i2s->bit_clk_master)
+			lrck = word_size;
+		else
+			lrck = i2s->mclk_freq / rate / 2;
+
 		regmap_update_bits(i2s->regmap, SUN4I_I2S_FMT0_REG,
 				   SUN8I_I2S_FMT0_LRCK_PERIOD_MASK,
-				   SUN8I_I2S_FMT0_LRCK_PERIOD(word_size));
+				   SUN8I_I2S_FMT0_LRCK_PERIOD(lrck));
+	}
 
 	/* Set sign extension to pad out LSB with 0 */
 	regmap_field_write(i2s->field_fmt_sext, 0);

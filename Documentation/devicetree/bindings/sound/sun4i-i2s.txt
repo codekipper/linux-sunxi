@@ -33,6 +33,9 @@ Optional properties:
 				configured to extend the slot width to the
 				value specified. Min 8, Max 32.
 
+- allwinner,playback-channels:  if this property is present then the number
+				of available channels is extended and the
+				outputs enabled.
 Example:
 
 i2s0: i2s@1c22400 {

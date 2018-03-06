@@ -63,6 +63,18 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	reg_vcc3v3: vcc3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	wifi_pwrseq: wifi_pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&r_pio 0 2 GPIO_ACTIVE_LOW>; /* PL2 */
+	};
+
 	/* This should be a es9023 but this driver should work */
         pcm5102: pcm510x {
                 compatible = "ti,pcm5102a";
@@ -127,15 +139,19 @@
 	status = "okay";
 };
 
+&codec_analog {
+	status = "okay";
+};
+
 &dai {
 	status = "okay";
 };
 
-&ehci0 {
+&de {
 	status = "okay";
 };
 
-&de {
+&ehci0 {
 	status = "okay";
 };
 
@@ -187,6 +203,10 @@
 		compatible = "ethernet-phy-ieee802.3-c22";
 		reg = <1>;
 	};
+};
+
+&mixer1 {
+	status = "okay";
 };
 
 &mmc0 {
@@ -317,6 +337,10 @@
 
 &reg_rtc_ldo {
 	regulator-name = "vcc-rtc";
+};
+
+&sound_hdmi {
+	status = "okay";
 };
 
 &sound {

@@ -44,6 +44,7 @@
 
 #include <dt-bindings/clock/sun50i-a64-ccu.h>
 #include <dt-bindings/clock/sun8i-r-ccu.h>
+#include <dt-bindings/reset/sun8i-r-ccu.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/reset/sun50i-a64-ccu.h>
 #include <dt-bindings/clock/sun8i-de2.h>
@@ -63,8 +64,8 @@
 			compatible = "allwinner,simple-framebuffer",
 				     "simple-framebuffer";
 			allwinner,pipeline = "de0-lcd1-hdmi";
-			clocks = <&ccu CLK_BUS_TCON1>, <&de2_clocks CLK_BUS_MIXER0>,
-				 <&ccu CLK_BUS_HDMI>, <&de2_clocks CLK_MIXER0>,
+			clocks = <&ccu CLK_BUS_TCON1>, <&display_clocks CLK_BUS_MIXER0>,
+				 <&ccu CLK_BUS_HDMI>, <&display_clocks CLK_MIXER0>,
 				 <&ccu CLK_TCON1>, <&ccu CLK_HDMI>;
 			status = "disabled";
 		};
@@ -73,8 +74,8 @@
 			compatible = "allwinner,simple-framebuffer",
 				     "simple-framebuffer";
 			allwinner,pipeline = "de0-lcd0";
-			clocks = <&ccu CLK_BUS_TCON0>, <&de2_clocks CLK_BUS_MIXER0>,
-				 <&de2_clocks CLK_MIXER0>, <&ccu CLK_TCON0>;
+			clocks = <&ccu CLK_BUS_TCON0>, <&display_clocks CLK_BUS_MIXER0>,
+				 <&display_clocks CLK_MIXER0>, <&ccu CLK_TCON0>;
 			status = "disabled";
 		};
 	};
@@ -114,8 +115,8 @@
 
 	de: display-engine {
 		compatible = "allwinner,sun50i-a64-display-engine";
-		allwinner,pipelines = <&de2_mixer0>,
-				      <&de2_mixer1>;
+		allwinner,pipelines = <&mixer0>,
+				      <&mixer1>;
 		status = "disabled";
 	};
 
@@ -144,6 +145,20 @@
 	psci {
 		compatible = "arm,psci-0.2";
 		method = "smc";
+	};
+
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		cma: linux,cma {
+			compatible = "shared-dma-pool";
+			reusable;
+			size = <0x4000000>;
+			alignment = <0x2000>;
+			linux,cma-default;
+		};
 	};
 
 	sound_spdif {
@@ -185,10 +200,11 @@
 		};
 	};
 
-	sound_hdmi {
+	sound_hdmi: sound_hdmi {
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "i2s";
 		simple-audio-card,name = "allwinner,hdmi";
+		status = "disabled";
 
 		simple-audio-card,mclk-fs = <256>;
 
@@ -219,7 +235,7 @@
 		#size-cells = <1>;
 		ranges;
 
-		de2_clocks: clock@1000000 {
+		display_clocks: clock@1000000 {
 			compatible = "allwinner,sun50i-a64-de2-clk";
 			reg = <0x01000000 0x100000>;
 			clocks = <&ccu CLK_DE>,
@@ -234,14 +250,15 @@
 			assigned-clock-rates = <300000000>;
 		};
 
-		de2_mixer0: mixer@1100000 {
-			compatible = "allwinner,sun8i-a83t-de2-mixer0";
+		mixer0: mixer@1100000 {
+			compatible = "allwinner,sun50i-a64-de2-mixer0";
 			reg = <0x01100000 0x100000>;
-			clocks = <&de2_clocks CLK_MIXER0>,
-				 <&de2_clocks CLK_BUS_MIXER0>;
+			clocks = <&display_clocks CLK_MIXER0>,
+				 <&display_clocks CLK_BUS_MIXER0>;
 			clock-names = "mod",
 				      "bus";
-			resets = <&de2_clocks RST_MIXER0>;
+			resets = <&display_clocks RST_MIXER0>;
+			status = "disabled";
 
 			ports {
 				#address-cells = <1>;
@@ -256,23 +273,19 @@
 						reg = <0>;
 						remote-endpoint = <&tcon0_in_mixer0>;
 					};
-
-					mixer0_out_tcon1: endpoint@1 {
-						reg = <1>;
-						remote-endpoint = <&tcon1_in_mixer0>;
-					};
 				};
 			};
 		};
 
-		de2_mixer1: mixer@1200000 {
-			compatible = "allwinner,sun8i-a83t-de2-mixer1";
+		mixer1: mixer@1200000 {
+			compatible = "allwinner,sun50i-a64-de2-mixer1";
 			reg = <0x01200000 0x100000>;
-			clocks = <&de2_clocks CLK_MIXER1>,
-				 <&de2_clocks CLK_BUS_MIXER1>;
+			clocks = <&display_clocks CLK_MIXER1>,
+				 <&display_clocks CLK_BUS_MIXER1>;
 			clock-names = "mod",
 				      "bus";
-			resets = <&de2_clocks RST_MIXER1>;
+			resets = <&display_clocks RST_MIXER1>;
+			status = "disabled";
 
 			ports {
 				#address-cells = <1>;
@@ -286,11 +299,6 @@
 					mixer1_out_tcon1: endpoint@0 {
 						reg = <0>;
 						remote-endpoint = <&tcon1_in_mixer1>;
-					};
-
-					mixer1_out_tcon0: endpoint@1 {
-						reg = <1>;
-						remote-endpoint = <&tcon0_in_mixer1>;
 					};
 				};
 			};
@@ -335,7 +343,7 @@
 		};
 
 		tcon0: lcd-controller@01c0c000 {
-			compatible = "allwinner,sun8i-a83t-tcon0";
+			compatible = "allwinner,sun50i-a64-tcon0";
 			reg = <0x01c0c000 0x1000>;
 			interrupts = <GIC_SPI 86 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_BUS_TCON0>,
@@ -360,11 +368,6 @@
 						reg = <0>;
 						remote-endpoint = <&mixer0_out_tcon0>;
 					};
-
-					tcon0_in_mixer1: endpoint@1 {
-						reg = <1>;
-						remote-endpoint = <&mixer1_out_tcon0>;
-					};
 				};
 
 				tcon0_out: port@1 {
@@ -376,7 +379,7 @@
 		};
 
 		tcon1: lcd-controller@1c0d000 {
-			compatible = "allwinner,sun8i-a83t-tcon1";
+			compatible = "allwinner,sun50i-a64-tcon1";
 			reg = <0x01c0d000 0x1000>;
 			interrupts = <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_BUS_TCON1>,
@@ -399,11 +402,6 @@
 					tcon1_in_mixer1: endpoint@0 {
 						reg = <0>;
 						remote-endpoint = <&mixer1_out_tcon1>;
-					};
-
-					tcon1_in_mixer0: endpoint@1 {
-						reg = <1>;
-						remote-endpoint = <&mixer0_out_tcon1>;
 					};
 				};
 
@@ -755,7 +753,7 @@
 			#sound-dai-cells = <0>;
 			compatible = "allwinner,sun50i-a64-i2s";
 			reg = <0x01c22c00 0x200>;
-			interrupts = <GIC_SPI 28 IRQ_TYPE_LEVEL_HIGH>;
+			interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_BUS_CODEC>, <&ccu CLK_AC_DIG>;
 			clock-names = "apb", "mod";
 			resets = <&ccu RST_BUS_CODEC>;
@@ -767,7 +765,7 @@
 
 		codec: codec@1c22e00 {
 			#sound-dai-cells = <0>;
-			compatible = "allwinner,sun50i-a64-codec";
+			compatible = "allwinner,sun8i-a33-codec";
 			reg = <0x01c22e00 0x600>;
 			interrupts = <GIC_SPI 28 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_BUS_CODEC>, <&ccu CLK_AC_DIG>;
@@ -931,23 +929,27 @@
 		};
 
 		hdmi: hdmi@1ee0000 {
-			compatible = "allwinner,sun8i-h3-dw-hdmi";
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun8i-h3-dw-hdmi",
+				     "allwinner,sun8i-a83t-dw-hdmi";
 			reg = <0x01ee0000 0x10000>,
 			      <0x01ef0000 0x10000>;
 			reg-io-width = <1>;
 			interrupts = <GIC_SPI 88 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&ccu CLK_BUS_HDMI>, <&ccu CLK_HDMI>,
-				 <&ccu CLK_HDMI_DDC>;
-			clock-names = "iahb", "isfr", "iddc";
+			clocks = <&ccu CLK_BUS_HDMI>, <&ccu CLK_HDMI_DDC>,
+				 <&ccu CLK_HDMI>;
+			clock-names = "iahb", "isfr", "tmds";
 			resets = <&ccu RST_BUS_HDMI0>, <&ccu RST_BUS_HDMI1>;
-			reset-names = "hdmi", "ddc";
+			reset-names = "hdmi", "ctrl";
+			phys = <&hdmi_phy>;
+			phy-names = "hdmi-phy";
 			status = "disabled";
 
 			ports {
 				#address-cells = <1>;
 				#size-cells = <0>;
 
-				port@0 {
+				hdmi_in: port@0 {
 					reg = <0>;
 					#address-cells = <1>;
 					#size-cells = <0>;
@@ -957,7 +959,24 @@
 						remote-endpoint = <&tcon1_out_hdmi>;
 					};
 				};
+
+				hdmi_out: port@1 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					reg = <1>;
+				};
 			};
+		};
+
+		hdmi_phy: hdmi-phy@1ef0000 {
+			compatible = "allwinner,sun8i-h3-hdmi-phy";
+			reg = <0x01ef0000 0x10000>;
+			clocks = <&ccu CLK_BUS_HDMI>, <&ccu CLK_HDMI_DDC>,
+				 <&ccu 6>;
+			clock-names = "bus", "mod", "pll-0";
+			resets = <&ccu RST_BUS_HDMI0>;
+			reset-names = "phy";
+			#phy-cells = <0>;
 		};
 
 		rtc: rtc@1f00000 {
@@ -989,6 +1008,18 @@
 		codec_analog: codec-analog@1f015c0 {
 			compatible = "allwinner,sun50i-a64-codec-analog";
 			reg = <0x01f015c0 0x4>;
+			status = "disabled";
+		};
+
+		r_i2c: i2c@1f02400 {
+			compatible = "allwinner,sun6i-a31-i2c";
+			reg = <0x01f02400 0x400>;
+			interrupts = <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&r_ccu CLK_APB0_I2C>;
+			resets = <&r_ccu RST_APB0_I2C>;
+			status = "disabled";
+			#address-cells = <1>;
+			#size-cells = <0>;
 		};
 
 		r_pio: pinctrl@1f02c00 {
@@ -1005,6 +1036,11 @@
 			r_rsb_pins: rsb {
 				pins = "PL0", "PL1";
 				function = "s_rsb";
+			};
+
+			r_i2c_pins_a: i2c-a {
+				pins = "PL8", "PL9";
+				function = "s_i2c";
 			};
 		};
 

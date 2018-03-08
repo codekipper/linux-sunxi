@@ -116,6 +116,7 @@ static int sun8i_dw_hdmi_bind(struct device *dev, struct device *master,
 
 	sun8i_hdmi_phy_init(hdmi->phy);
 
+	plat_data->auto_cts = true;
 	plat_data->mode_valid = &sun8i_dw_hdmi_mode_valid;
 	plat_data->phy_ops = sun8i_hdmi_phy_get_ops();
 	plat_data->phy_name = "sun8i_dw_hdmi_phy";

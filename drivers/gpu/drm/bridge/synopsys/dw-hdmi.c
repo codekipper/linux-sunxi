@@ -425,16 +425,22 @@ static struct i2c_adapter *dw_hdmi_i2c_adapter(struct dw_hdmi *hdmi)
 static void hdmi_set_cts_n(struct dw_hdmi *hdmi, unsigned int cts,
 			   unsigned int n)
 {
-	/* Must be set/cleared first */
-	hdmi_modb(hdmi, 0, HDMI_AUD_CTS3_CTS_MANUAL, HDMI_AUD_CTS3);
+	if (!hdmi->plat_data->auto_cts) {
+		/* Must be set/cleared first */
+		hdmi_modb(hdmi, 0, HDMI_AUD_CTS3_CTS_MANUAL, HDMI_AUD_CTS3);
 
-	/* nshift factor = 0 */
-	hdmi_modb(hdmi, 0, HDMI_AUD_CTS3_N_SHIFT_MASK, HDMI_AUD_CTS3);
+		/* nshift factor = 0 */
+		hdmi_modb(hdmi, 0, HDMI_AUD_CTS3_N_SHIFT_MASK, HDMI_AUD_CTS3);
 
-	hdmi_writeb(hdmi, ((cts >> 16) & HDMI_AUD_CTS3_AUDCTS19_16_MASK) |
-		    HDMI_AUD_CTS3_CTS_MANUAL, HDMI_AUD_CTS3);
-	hdmi_writeb(hdmi, (cts >> 8) & 0xff, HDMI_AUD_CTS2);
-	hdmi_writeb(hdmi, cts & 0xff, HDMI_AUD_CTS1);
+		hdmi_writeb(hdmi,
+			    ((cts >> 16) & HDMI_AUD_CTS3_AUDCTS19_16_MASK) |
+			    HDMI_AUD_CTS3_CTS_MANUAL, HDMI_AUD_CTS3);
+		hdmi_writeb(hdmi, (cts >> 8) & 0xff, HDMI_AUD_CTS2);
+		hdmi_writeb(hdmi, cts & 0xff, HDMI_AUD_CTS1);
+	} else {
+		/* set automatic CTS calculation */
+		hdmi_writeb(hdmi, 0x00, HDMI_AUD_CTS3);
+	}
 
 	hdmi_writeb(hdmi, (n >> 16) & 0x0f, HDMI_AUD_N3);
 	hdmi_writeb(hdmi, (n >> 8) & 0xff, HDMI_AUD_N2);

@@ -865,6 +865,7 @@ struct snd_soc_component {
 	unsigned int ignore_pmdown_time:1; /* pmdown_time is ignored at stop */
 	unsigned int registered_as_component:1;
 	unsigned int suspended:1; /* is in suspend PM state */
+	unsigned int alloced_component:1;
 
 	struct list_head list;
 	struct list_head card_aux_list; /* for auxiliary bound components */

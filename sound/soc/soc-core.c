@@ -3436,6 +3436,7 @@ int snd_soc_register_component(struct device *dev,
 	if (!component)
 		return -ENOMEM;
 
+	component->alloced_component = 1;
 	return snd_soc_add_component(dev, component, component_driver,
 				     dai_drv, num_dai);
 }
@@ -3467,7 +3468,9 @@ static int __snd_soc_unregister_component(struct device *dev)
 
 	if (found) {
 		snd_soc_component_cleanup(component);
-		kfree(component);
+
+		if (component->alloced_component)
+			kfree(component);
 	}
 
 	return found;

@@ -858,6 +858,7 @@ static int sun4i_hdmi_audio_cpu_dai_probe(struct snd_soc_dai *dai)
 {
 	struct sun4i_hdmi *hdmi = dai_to_hdmi(dai);
 
+	printk("%s COOPS word size dma data address is 0x%x\n", __func__, hdmi->audio.dma_data.addr);
 	snd_soc_dai_init_dma_data(dai, &hdmi->audio.dma_data, NULL);
 
 	return 0;
@@ -912,6 +913,11 @@ static int sun4i_hdmi_register_audio_driver(struct device *dev,
 	struct snd_soc_dai_link *dai_link = &hdmi->audio.link;
 	struct snd_soc_card *card = &hdmi->audio.card;
 
+	hdmi->audio.dma_data.addr = 0x1c16000/* hdmi->base */ + SUN4I_HDMI_TXFIFO;
+	hdmi->audio.dma_data.maxburst = 2;
+	hdmi->audio.dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+
+	printk("%s COOPS word size dma data address is 0x%x\n", __func__, hdmi->audio.dma_data.addr);
 	ret = devm_snd_dmaengine_pcm_register(dev, &pcm_conf, 0);
 	if (ret) {
 		dev_err(dev, "Could not register PCM component: %d\n", ret);

@@ -475,10 +475,11 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 			regmap_update_bits(i2s->regmap, SUN8I_I2S_CHAN_CFG_REG,
 					   SUN8I_I2S_CHAN_CFG_TX_SLOT_NUM_MASK,
 					   SUN8I_I2S_CHAN_CFG_TX_SLOT_NUM(channels));
+		else
+			/* Configure the channels */
+			regmap_field_write(i2s->field_txchansel, SUN4I_I2S_CHAN_SEL(channels));
 
 		regmap_field_write(i2s->field_txchanmap, 0x10);
-		/* Configure the channels */
-		regmap_field_write(i2s->field_txchansel, SUN4I_I2S_CHAN_SEL(2));
 
 		if (i2s->variant->is_h3_i2s_based) {
 			u32 chan_sel = SUN8I_I2S_TX_CHAN_OFFSET(i2s->offset) | 0x1;
@@ -800,6 +801,7 @@ static int sun4i_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 	{
 	/* COOPS DEBUGGING FOR NOW */
 	u32 reg_val = 0;
+        u32 i;
 
 	printk("I2S Command State %d\n", cmd);
 	regmap_read(i2s->regmap, SUN4I_I2S_CTRL_REG, &reg_val);
@@ -824,6 +826,11 @@ static int sun4i_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 	printk("SUN8I_I2S_RX_CHAN_SEL_REG 0x%x\n", reg_val);
 	regmap_read(i2s->regmap, SUN8I_I2S_RX_CHAN_MAP_REG, &reg_val);
 	printk("SUN8I_I2S_RX_CHAN_MAP_REG 0x%x\n", reg_val);
+        printk("Coops Reg Dump\n");
+	for (i = 0; i <= 0x58; i+=4) {
+		regmap_read(i2s->regmap, i, &reg_val);
+		printk("0x%x 0x%x\n", i, reg_val);
+        	}
 	}
 
 	return 0;

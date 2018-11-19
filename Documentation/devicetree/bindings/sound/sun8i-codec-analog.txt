@@ -9,9 +9,14 @@ Required properties:
 Required properties if not a sub-node of the PRCM node:
 - reg: must contain the registers location and length
 
+Optional properties:
+- hpvcc-supply: Regulator supply for the headphone amplifier. This is
+		labeled CPVDD on the A64.
+
 Example:
 prcm: prcm@1f01400 {
 	codec_analog: codec-analog {
 		compatible = "allwinner,sun8i-a23-codec-analog";
+		hpvcc-supply = <&reg_aldo1>;
 	};
 };

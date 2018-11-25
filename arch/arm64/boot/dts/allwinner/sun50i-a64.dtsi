@@ -211,6 +211,20 @@
 			(GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_HIGH)>;
 	};
 
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		cma_pool: cma@48000000 {
+			compatible = "shared-dma-pool";
+			size = <0x8000000>;
+			alloc-ranges = <0x48000000 0x8000000>;
+			reusable;
+			linux,cma-default;
+		};
+	};
+
 	soc {
 		compatible = "simple-bus";
 		#address-cells = <1>;

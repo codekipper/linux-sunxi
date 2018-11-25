@@ -182,7 +182,7 @@
 
 	sound_spdif {
 		compatible = "simple-audio-card";
-		simple-audio-card,name = "On-board SPDIF";
+		simple-audio-card,name = "allwinner-spdif";
 
 		simple-audio-card,cpu {
 			sound-dai = <&spdif>;

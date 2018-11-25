@@ -294,7 +294,7 @@
 
 /* On Euler connector */
 &spdif {
-	status = "disabled";
+	status = "okay";
 };
 
 /* On Exp and Euler connectors */

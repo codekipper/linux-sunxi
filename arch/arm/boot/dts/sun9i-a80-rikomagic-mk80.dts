@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: (GPL-2.0+ or MIT)
+/*
+ * Copyright (C) 2018 Marcus Cooper
+ * Author: Marcus Cooper <codekipper@gmail.com>
+ */
+
+/dts-v1/;
+#include "sun9i-a80-cx-a99.dtsi"
+#include "sun9i-a80.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+
+/ {
+       model = "Rikomagic MK80";
+       compatible = "rikomagic,mk80", "allwinner,sun9i-a80";
+};

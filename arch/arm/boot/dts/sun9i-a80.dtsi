@@ -1009,6 +1009,11 @@
 				bias-pull-up;
 			};
 
+			spdif_tx_pins_a: spdif_pins {
+				pins = "PH18";
+				function = "spdif";
+			};
+
 			uart0_ph_pins: uart0-ph-pins {
 				pins = "PH12", "PH13";
 				function = "uart0";
@@ -1018,6 +1023,16 @@
 				pins = "PG12", "PG13", "PG14", "PG15";
 				function = "uart4";
 			};
+		};
+
+		spdif: spdif@6001000 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun9i-a80-spdif";
+			reg = <0x06001000 0x400>;
+			interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_SPDIF>;
+			resets = <&ccu RST_BUS_SPDIF>;
+			status = "disabled";
 		};
 
 		uart0: serial@7000000 {

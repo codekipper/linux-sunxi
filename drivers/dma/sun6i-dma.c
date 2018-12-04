@@ -1218,12 +1218,34 @@ static struct sun6i_dma_config sun8i_v3s_dma_cfg = {
 			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES),
 };
 
+/*
+ * The A80 have 16  physical channels, a maximum DRQ port id of 26,
+ * and a total of 27 usable source and destination endpoints.
+ */
+
+static struct sun6i_dma_config sun9i_a80_dma_cfg = {
+	.nr_max_channels = 16,
+	.nr_max_requests = 26,
+	.nr_max_vchans   = 27,
+	.clock_autogate_enable = sun6i_enable_clock_autogate_a23,
+	.set_burst_length = sun6i_set_burst_length_a31,
+	.src_burst_lengths = BIT(1) | BIT(8),
+	.dst_burst_lengths = BIT(1) | BIT(8),
+	.src_addr_widths   = BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) |
+			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
+			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES),
+	.dst_addr_widths   = BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) |
+			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
+			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES),
+};
+
 static const struct of_device_id sun6i_dma_match[] = {
 	{ .compatible = "allwinner,sun6i-a31-dma", .data = &sun6i_a31_dma_cfg },
 	{ .compatible = "allwinner,sun8i-a23-dma", .data = &sun8i_a23_dma_cfg },
 	{ .compatible = "allwinner,sun8i-a83t-dma", .data = &sun8i_a83t_dma_cfg },
 	{ .compatible = "allwinner,sun8i-h3-dma", .data = &sun8i_h3_dma_cfg },
 	{ .compatible = "allwinner,sun8i-v3s-dma", .data = &sun8i_v3s_dma_cfg },
+	{ .compatible = "allwinner,sun9i-a80-dma", .data = &sun9i_a80_dma_cfg },
 	{ .compatible = "allwinner,sun50i-a64-dma", .data = &sun50i_a64_dma_cfg },
 	{ .compatible = "allwinner,sun50i-h6-dma", .data = &sun50i_h6_dma_cfg },
 	{ /* sentinel */ }

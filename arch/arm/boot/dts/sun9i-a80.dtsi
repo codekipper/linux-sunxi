@@ -318,6 +318,15 @@
 			};
 		};
 
+		dma: dma-controller@802000 {
+			compatible = "allwinner,sun9i-a80-dma";
+			reg = <0x00802000 0x1000>;
+			interrupts = <GIC_SPI 50 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_DMA>;
+			resets = <&ccu RST_BUS_DMA>;
+			#dma-cells = <1>;
+		};
+
 		gmac: ethernet@830000 {
 			compatible = "allwinner,sun7i-a20-gmac";
 			reg = <0x00830000 0x1054>;

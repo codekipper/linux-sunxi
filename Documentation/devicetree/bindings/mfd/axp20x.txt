@@ -8,6 +8,7 @@ axp221 (X-Powers)
 axp223 (X-Powers)
 axp803 (X-Powers)
 axp806 (X-Powers)
+axp808 (X-Powers)
 axp809 (X-Powers)
 axp813 (X-Powers)
 
@@ -26,7 +27,7 @@ Required properties:
     * "x-powers,axp803"
     * "x-powers,axp806"
     * "x-powers,axp805", "x-powers,axp806"
-    * "x-powers,axp809"
+    * "x-powers,axp808", "x-powers,axp809"
     * "x-powers,axp813"
 - reg: The I2C slave address or RSB hardware address for the AXP chip
 - interrupts: SoC NMI / GPIO interrupt connected to the PMIC's IRQ pin
@@ -146,7 +147,7 @@ LDO_IO1		: LDO		: ips-supply		: GPIO 1
 RTC_LDO		: LDO		: ips-supply		: always on
 DRIVEVBUS	: Enable output	: drivevbus-supply	: external regulator
 
-AXP806 regulators, type, and corresponding input supply names:
+AXP806/AXP808 regulators, type, and corresponding input supply names:
 
 Regulator	  Type		  Supply Name		  Notes
 ---------	  ----		  -----------		  -----
@@ -167,7 +168,7 @@ CLDO2		: LDO		: cldoin-supply		: shared supply
 CLDO3		: LDO		: cldoin-supply		: shared supply
 SW		: On/Off Switch : swin-supply
 
-Additionally, the AXP806 DC-DC regulators support poly-phase arrangements
+Additionally, the AXP806/AXP808 DC-DC regulators support poly-phase arrangements
 for higher output current. The possible groupings are: A+B, A+B+C, D+E.
 
 AXP809 regulators, type, and corresponding input supply names:

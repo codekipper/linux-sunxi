@@ -1023,11 +1023,12 @@ static int axp20x_set_dcdc_freq(struct platform_device *pdev, u32 dcdcfreq)
 		reg = AXP803_DCDC_FREQ_CTRL;
 		/* Fall through - to the check below.*/
 	case AXP806_ID:
+	case AXP808_ID:
 		/*
 		 * AXP806 also have DCDC work frequency setting register at a
 		 * different position.
 		 */
-		if (axp20x->variant == AXP806_ID)
+		if (axp20x->variant == AXP806_ID || axp20x->variant == AXP808_ID)
 			reg = AXP806_DCDC_FREQ_CTRL;
 		/* Fall through */
 	case AXP221_ID:
@@ -1112,6 +1113,7 @@ static int axp20x_set_dcdc_workmode(struct regulator_dev *rdev, int id, u32 work
 		break;
 
 	case AXP806_ID:
+	case AXP808_ID:
 		/*
 		 * AXP806 DCDC regulator IDs have the same range as AXP22X.
 		 * (See include/linux/mfd/axp20x.h)
@@ -1179,6 +1181,7 @@ static bool axp20x_is_polyphase_slave(struct axp20x_dev *axp20x, int id)
 		break;
 
 	case AXP806_ID:
+	case AXP808_ID:
 		regmap_read(axp20x->regmap, AXP806_DCDC_MODE_CTRL2, &reg);
 
 		switch (id) {
@@ -1238,6 +1241,7 @@ static int axp20x_regulator_probe(struct platform_device *pdev)
 						  "x-powers,drive-vbus-en");
 		break;
 	case AXP806_ID:
+	case AXP808_ID:
 		regulators = axp806_regulators;
 		nregulators = AXP806_REG_ID_MAX;
 		break;

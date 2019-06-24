@@ -57,6 +57,7 @@
 		serial2 = &uart2;
 		serial3 = &uart3;
 		serial4 = &uart4;
+		i2c0 = &i2c1;
 	};
 
 	chosen {
@@ -80,7 +81,7 @@
                 pcm510x,format = "i2s";
                 #sound-dai-cells = <0>;
         };
-
+#if 0
 	sound_i2s {
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "i2s";
@@ -96,6 +97,35 @@
 			sound-dai = <&pcm5102>;
 		};
 	};
+#else
+	sound_i2s {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,routing =
+			"Headphone Jack", "VOUTLHP",
+			"Headphone Jack", "VOUTRHP",
+			"Line Out Jack", "VOUTL",
+			"Line Out Jack", "VOUTR",
+			"VINM", "Mic Jack",
+			"VINL", "Line In Jack",
+			"VINR", "Line In Jack";
+		simple-audio-card,widgets =
+			"Headphone", "Headphone Jack",
+			"Line", "Line In Jack",
+			"Line", "Line Out Jack",
+			"Microphone", "Mic Jack";
+
+		simple-audio-card,mclk-fs = <256>;
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&ext_codec>;
+		};
+	};
+#endif
 
 	i2s1_in: i2s1-in {
                 #sound-dai-cells = <0>;
@@ -189,6 +219,23 @@
 
 &i2c1 {
 	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_pins>;
+	status = "okay";
+
+	/* added for test with I2S waveshare codec board based on UDA1380 */
+	ext_codec: uda1380@18 {
+		#sound-dai-cells = <0>; /* added for dmesg err: "could not get #sound-dai-cells for " */
+		compatible = "nxp,uda1380";
+		reg = <0x18>;
+		/* reset-gpio = <&pio 7 3 GPIO_ACTIVE_HIGH>; */
+		/*
+		 * commented out so uda1380_probe move forward..
+		 * otherwise get: asoc-simple-card sound: ASoC: failed to instantiate card -16
+		 * power-gpio = <&pio 7 11 GPIO_ACTIVE_HIGH>;
+		 */
+		dac-clk = <1>; // SYSCLK=0, WSPLL=1
+	};
 };
 
 &i2c1_pins {

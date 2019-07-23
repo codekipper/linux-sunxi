@@ -27,6 +27,7 @@
 #define SUN4I_I2S_CTRL_MODE_MASK		BIT(5)
 #define SUN4I_I2S_CTRL_MODE_SLAVE			(1 << 5)
 #define SUN4I_I2S_CTRL_MODE_MASTER			(0 << 5)
+#define SUN4I_I2S_CTRL_PCM			BIT(4)
 #define SUN4I_I2S_CTRL_LOOP			BIT(3)
 #define SUN4I_I2S_CTRL_TX_EN			BIT(2)
 #define SUN4I_I2S_CTRL_RX_EN			BIT(1)
@@ -92,6 +93,9 @@
 /* Defines required for sun8i-h3 support */
 #define SUN8I_I2S_CTRL_BCLK_OUT			BIT(18)
 #define SUN8I_I2S_CTRL_LRCK_OUT			BIT(17)
+#define SUN8I_I2S_CTRL_MODE_RIGHT_J			(2 << 0)
+#define SUN8I_I2S_CTRL_MODE_I2S_LEFT_J			(1 << 0)
+#define SUN8I_I2S_CTRL_MODE_PCM				(0 << 0)
 
 #define SUN8I_I2S_FMT0_LRCK_PERIOD_MASK		GENMASK(17, 8)
 #define SUN8I_I2S_FMT0_LRCK_PERIOD(period)	((period - 1) << 8)
@@ -165,6 +169,7 @@ struct sun4i_i2s_quirks {
 
 	s8	(*get_sr)(const struct sun4i_i2s *, int);
 	s8	(*get_wss)(const struct sun4i_i2s *, int);
+	int	(*set_format)(struct sun4i_i2s *, unsigned int);
 };
 
 struct sun4i_i2s {
@@ -554,12 +559,9 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 				      i2s->slot_width : params_width(params));
 }
 
-static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+static int sun4i_i2s_set_format(struct sun4i_i2s *i2s, unsigned int fmt)
 {
-	struct sun4i_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 	u32 val;
-	u32 bclk_polarity = SUN4I_I2S_FMT0_POLARITY_NORMAL;
-	u32 lrclk_polarity = SUN4I_I2S_FMT0_POLARITY_NORMAL;
 
 	/* DAI Mode */
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -574,23 +576,56 @@ static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		val = SUN4I_I2S_FMT0_FMT_RIGHT_J;
 		break;
 	default:
+		return -EINVAL;
+	}
+
+	regmap_field_write(i2s->field_fmt_mode, val);
+
+	return 0;
+}
+
+static int sun8i_i2s_set_format(struct sun4i_i2s *i2s, unsigned int fmt)
+{
+	u32 val;
+
+	/* DAI Mode */
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
+		i2s->offset = 1;
+	case SND_SOC_DAIFMT_LEFT_J:
+		val = SUN8I_I2S_CTRL_MODE_I2S_LEFT_J;
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
+		val = SUN8I_I2S_CTRL_MODE_RIGHT_J;
+		break;
+	case SND_SOC_DAIFMT_DSP_A:
+		i2s->offset = 1;
+	case SND_SOC_DAIFMT_DSP_B:
+		val = SUN8I_I2S_CTRL_MODE_PCM;
+		break;
+
+	default:
+		return -EINVAL;
+	}
+
+	regmap_field_write(i2s->field_fmt_mode, val);
+
+	return 0;
+}
+
+static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct sun4i_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+	u32 val;
+	u32 bclk_polarity = SUN4I_I2S_FMT0_POLARITY_NORMAL;
+	u32 lrclk_polarity = SUN4I_I2S_FMT0_POLARITY_NORMAL;
+
+	/* Set DAI Mode */
+	if (i2s->variant->set_format(i2s, fmt) != 0) {
 		dev_err(dai->dev, "Unsupported format: %d\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
 		return -EINVAL;
 	}
-
-	if (i2s->variant->is_h3_i2s_based) {
-		/*
-		 * offset being set indicates that we're connected to an i2s
-		 * device, however offset is only used on the sun8i block and
-		 * i2s shares the same setting with the LJ format. Increment
-		 * val so that the bit to value to write is correct.
-		 */
-		if (i2s->offset > 0)
-			val++;
-	}
-
-	regmap_field_write(i2s->field_fmt_mode, val);
 
 	/* DAI clock polarity */
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1094,6 +1129,7 @@ static const struct sun4i_i2s_quirks sun4i_a10_i2s_quirks = {
 	.field_rxchansel	= REG_FIELD(SUN4I_I2S_RX_CHAN_SEL_REG, 0, 2),
 	.get_sr			= sun4i_i2s_get_sr,
 	.get_wss		= sun4i_i2s_get_wss,
+	.set_format		= sun4i_i2s_set_format,
 };
 
 static const struct sun4i_i2s_quirks sun6i_a31_i2s_quirks = {
@@ -1114,6 +1150,7 @@ static const struct sun4i_i2s_quirks sun6i_a31_i2s_quirks = {
 	.field_rxchansel	= REG_FIELD(SUN4I_I2S_RX_CHAN_SEL_REG, 0, 2),
 	.get_sr			= sun4i_i2s_get_sr,
 	.get_wss		= sun4i_i2s_get_wss,
+	.set_format		= sun4i_i2s_set_format,
 };
 
 static const struct sun4i_i2s_quirks sun8i_a83t_i2s_quirks = {
@@ -1133,6 +1170,7 @@ static const struct sun4i_i2s_quirks sun8i_a83t_i2s_quirks = {
 	.field_rxchansel	= REG_FIELD(SUN4I_I2S_RX_CHAN_SEL_REG, 0, 2),
 	.get_sr			= sun8i_i2s_get_sr_wss,
 	.get_wss		= sun8i_i2s_get_sr_wss,
+	.set_format		= sun4i_i2s_set_format,
 };
 
 static const struct sun4i_i2s_quirks sun8i_h3_i2s_quirks = {
@@ -1155,6 +1193,7 @@ static const struct sun4i_i2s_quirks sun8i_h3_i2s_quirks = {
 	.field_rxchansel	= REG_FIELD(SUN8I_I2S_RX_CHAN_SEL_REG, 0, 2),
 	.get_sr			= sun8i_i2s_get_sr_wss,
 	.get_wss		= sun8i_i2s_get_sr_wss,
+	.set_format		= sun8i_i2s_set_format,
 };
 
 static const struct sun4i_i2s_quirks sun50i_a64_codec_i2s_quirks = {
@@ -1175,6 +1214,7 @@ static const struct sun4i_i2s_quirks sun50i_a64_codec_i2s_quirks = {
 	.field_rxchansel	= REG_FIELD(SUN4I_I2S_RX_CHAN_SEL_REG, 0, 2),
 	.get_sr			= sun4i_i2s_get_sr,
 	.get_wss		= sun4i_i2s_get_wss,
+	.set_format		= sun4i_i2s_set_format,
 };
 
 static int sun4i_i2s_init_regmap_fields(struct device *dev,

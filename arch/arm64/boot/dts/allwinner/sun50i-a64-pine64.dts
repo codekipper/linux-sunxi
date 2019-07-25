@@ -97,7 +97,7 @@
 			sound-dai = <&pcm5102>;
 		};
 	};
-#else
+//#else
 	sound_i2s {
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "i2s";
@@ -126,6 +126,25 @@
 		};
 	};
 #endif
+	sound-modem {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "EC25 audio";
+		simple-audio-card,format = "dsp_a";
+		simple-audio-card,mclk-fs = <256>;
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&ec25_codec>;
+		};
+	};
+
+	ec25_codec: ec25-codec {
+		compatible = "quectel,ec25";
+		#sound-dai-cells = <0>;
+	};
 
 	i2s1_in: i2s1-in {
                 #sound-dai-cells = <0>;

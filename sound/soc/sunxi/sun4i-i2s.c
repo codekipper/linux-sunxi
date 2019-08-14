@@ -156,7 +156,7 @@ struct sun4i_i2s_quirks {
 	s8	(*get_wss)(const struct sun4i_i2s *, int);
 	int	(*set_chan_cfg)(const struct sun4i_i2s *,
 				const struct snd_pcm_hw_params *);
-	int	(*set_fmt)(const struct sun4i_i2s *, unsigned int);
+	int	(*set_fmt)(struct sun4i_i2s *, unsigned int);
 };
 
 struct sun4i_i2s {
@@ -169,6 +169,7 @@ struct sun4i_i2s {
 	unsigned int	mclk_freq;
 	unsigned int	slots;
 	unsigned int	slot_width;
+	unsigned int	offset;
 
 	struct snd_dmaengine_dai_dma_data	capture_dma_data;
 	struct snd_dmaengine_dai_dma_data	playback_dma_data;
@@ -516,7 +517,7 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 				      slots, slot_width);
 }
 
-static int sun4i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
+static int sun4i_i2s_set_soc_fmt(struct sun4i_i2s *i2s,
 				 unsigned int fmt)
 {
 	u32 val;
@@ -589,11 +590,10 @@ static int sun4i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
 	return 0;
 }
 
-static int sun8i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
+static int sun8i_i2s_set_soc_fmt(struct sun4i_i2s *i2s,
 				 unsigned int fmt)
 {
 	u32 mode, val;
-	u8 offset;
 
 	/*
 	 * DAI clock polarity
@@ -632,27 +632,27 @@ static int sun8i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_DSP_A:
 		mode = SUN8I_I2S_CTRL_MODE_PCM;
-		offset = 1;
+		i2s->offset = 1;
 		break;
 
 	case SND_SOC_DAIFMT_DSP_B:
 		mode = SUN8I_I2S_CTRL_MODE_PCM;
-		offset = 0;
+		i2s->offset = 0;
 		break;
 
 	case SND_SOC_DAIFMT_I2S:
 		mode = SUN8I_I2S_CTRL_MODE_LEFT;
-		offset = 1;
+		i2s->offset = 1;
 		break;
 
 	case SND_SOC_DAIFMT_LEFT_J:
 		mode = SUN8I_I2S_CTRL_MODE_LEFT;
-		offset = 0;
+		i2s->offset = 0;
 		break;
 
 	case SND_SOC_DAIFMT_RIGHT_J:
 		mode = SUN8I_I2S_CTRL_MODE_RIGHT;
-		offset = 0;
+		i2s->offset = 0;
 		break;
 
 	default:
@@ -663,10 +663,10 @@ static int sun8i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
 			   SUN8I_I2S_CTRL_MODE_MASK, mode);
 	regmap_update_bits(i2s->regmap, SUN8I_I2S_TX_CHAN_SEL_REG,
 			   SUN8I_I2S_TX_CHAN_OFFSET_MASK,
-			   SUN8I_I2S_TX_CHAN_OFFSET(offset));
+			   SUN8I_I2S_TX_CHAN_OFFSET(i2s->offset));
 	regmap_update_bits(i2s->regmap, SUN8I_I2S_RX_CHAN_SEL_REG,
 			   SUN8I_I2S_TX_CHAN_OFFSET_MASK,
-			   SUN8I_I2S_TX_CHAN_OFFSET(offset));
+			   SUN8I_I2S_TX_CHAN_OFFSET(i2s->offset));
 
 	/* DAI clock master masks */
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {

@@ -1171,7 +1171,13 @@ static const struct snd_soc_component_driver sun4i_i2s_component = {
 
 static bool sun4i_i2s_rd_reg(struct device *dev, unsigned int reg)
 {
-	return true;
+	switch (reg) {
+	case SUN4I_I2S_FIFO_TX_REG:
+		return false;
+
+	default:
+		return true;
+	}
 }
 
 static bool sun4i_i2s_wr_reg(struct device *dev, unsigned int reg)
@@ -1189,6 +1195,7 @@ static bool sun4i_i2s_wr_reg(struct device *dev, unsigned int reg)
 static bool sun4i_i2s_volatile_reg(struct device *dev, unsigned int reg)
 {
 	switch (reg) {
+	case SUN4I_I2S_FIFO_CTRL_REG:
 	case SUN4I_I2S_FIFO_RX_REG:
 	case SUN4I_I2S_FIFO_TX_REG:
 	case SUN4I_I2S_FIFO_STA_REG:

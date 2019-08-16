@@ -76,6 +76,13 @@ config SFP
 
 comment "MII PHY device drivers"
 
+config AC200_PHY
+	tristate "AC200 EPHY"
+	depends on NVMEM
+	depends on OF
+	help
+	  Fast ethernet PHY as found in X-Powers AC200 multi-function device.
+
 config AIR_EN8811H_PHY
 	tristate "Airoha EN8811H 2.5 Gigabit PHY"
 	help

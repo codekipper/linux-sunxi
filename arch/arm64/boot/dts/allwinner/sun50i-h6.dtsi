@@ -666,6 +666,15 @@
 			status = "disabled";
 		};
 
+		ahub_daudio1: ahub_daudio1@5097000{
+			compatible = "allwinner,sunxi-ahub-daudio";
+			reg = <0x05097000 0xADF>;
+			clocks = <&ccu CLK_BUS_AUDIO_HUB>, <&ccu CLK_AUDIO_HUB>,
+				 <&ccu CLK_BUS_I2S1>, <&ccu CLK_I2S1>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
 		usb2otg: usb@5100000 {
 			compatible = "allwinner,sun50i-h6-musb",
 				     "allwinner,sun8i-a33-musb";

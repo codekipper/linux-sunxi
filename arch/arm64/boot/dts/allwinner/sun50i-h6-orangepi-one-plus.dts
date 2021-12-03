@@ -41,3 +41,37 @@
 		reg = <1>;
 	};
 };
+
+&ahub_i2s3 {
+};
+
+&codec {
+	allwinner,audio-routing =
+		"Line Out", "LINEOUT";
+};
+
+&ahub_codec {
+	status = "okay";
+};
+
+&ahub_cpudai0 {
+	status = "okay";
+};
+
+&ahub_cpudai1 {
+};
+
+&ahub_cpudai2 {
+};
+
+&sndahub {
+	status = "okay";
+};
+
+&ahub_i2s1 {
+	status = "okay";
+};
+
+&hdmi_audio {
+	status = "okay";
+};

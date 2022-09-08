@@ -59,6 +59,24 @@
 		enable-active-high;
 		gpio = <&pio 2 16 GPIO_ACTIVE_HIGH>; /* PC16 */
 	};
+
+	sound-spdif {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "sun50i-h6-spdif";
+
+		simple-audio-card,cpu {
+			sound-dai = <&spdif>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&spdif_out>;
+		};
+	};
+
+	spdif_out: spdif-out {
+		#sound-dai-cells = <0>;
+		compatible = "linux,spdif-dit";
+	};
 };
 
 &codec {
@@ -210,12 +228,8 @@
 	};
 };
 
-&pio {
-	vcc-pc-supply = <&reg_aldo1>;
-	vcc-pf-supply = <&reg_aldo1>;
-	vcc-pg-supply = <&reg_bldo1>;
-	vcc-ph-supply = <&reg_aldo1>;
-	vcc-pi-supply = <&reg_aldo1>;
+&spdif {
+	status = "okay";
 };
 
 &spi0  {

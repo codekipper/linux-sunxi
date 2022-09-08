@@ -332,6 +332,13 @@
 				bias-pull-up;
 			};
 
+			/omit-if-no-ref/
+			spdif_tx_pin: spdif-tx-pin {
+				pins = "PH4";
+				function = "spdif";
+			};
+
+			/omit-if-no-ref/
 			spi0_pins: spi0-pins {
 				pins = "PC0", "PC2", "PC3", "PC4";
 				function = "spi0";
@@ -922,6 +929,21 @@
 			resets = <&ccu RST_BUS_OHCI3>;
 			phys = <&usbphy 3>;
 			phy-names = "usb";
+		};
+
+		spdif: spdif@5093000 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun50i-h616-spdif",
+				     "allwinner,sun50i-h6-spdif";
+			reg = <0x05093000 0x400>;
+			interrupts = <GIC_SPI 21 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_SPDIF>, <&ccu CLK_SPDIF>;
+			clock-names = "apb", "spdif";
+			resets = <&ccu RST_BUS_SPDIF>;
+			dmas = <&dma 2>;
+			dma-names = "tx";
+			pinctrl-names = "default";
+			pinctrl-0 = <&spdif_tx_pin>;
 			status = "disabled";
 		};
 

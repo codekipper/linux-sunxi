@@ -22,6 +22,17 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	connector {
+		compatible = "hdmi-connector";
+		type = "d";
+
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
+			};
+		};
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
@@ -82,17 +93,34 @@
 	status = "okay";
 };
 
-&ehci1 {
+&de {
 	status = "okay";
 };
 
 /* USB 2 & 3 are on headers only. */
+&ehci1 {
+	status = "okay";
+};
+
+&ehci2 {
+	status = "okay";
+};
+
+&ehci3 {
+	status = "okay";
+};
 
 &emac0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&ext_rgmii_pins>;
 	phy-handle = <&ext_rgmii_phy>;
 	status = "okay";
+};
+
+&hdmi_out {
+	hdmi_out_con: endpoint {
+		remote-endpoint = <&hdmi_con_in>;
+	};
 };
 
 &mdio0 {
@@ -109,6 +137,14 @@
 };
 
 &ohci1 {
+	status = "okay";
+};
+
+&ohci2 {
+	status = "okay";
+};
+
+&ohci3 {
 	status = "okay";
 };
 
@@ -154,5 +190,34 @@
 
 &usbphy {
 	usb1_vbus-supply = <&reg_usb1_vbus>;
+	status = "okay";
+};
+
+/* WIP - Audio Hub enabling */
+&ahub_codec {
+	status = "okay";
+};
+
+&ahub_cpudai0 {
+	status = "okay";
+};
+
+&ahub_cpudai1 {
+	status = "okay";
+};
+
+&ahub_cpudai2 {
+	status = "okay";
+};
+
+&sndahub {
+	status = "okay";
+};
+
+&ahub_i2s1 {
+	status = "okay";
+};
+
+&hdmi_audio {
 	status = "okay";
 };

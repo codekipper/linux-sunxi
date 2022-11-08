@@ -99,6 +99,25 @@
 		#sound-dai-cells = <0>;
 		compatible = "linux,spdif-dit";
 	};
+
+	pcm5102: pcm510x {
+		compatible = "ti,pcm5102a";
+		pcm510x,format = "i2s";
+		#sound-dai-cells = <0>;
+	};
+
+	sound_i2s {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+
+		simple-audio-card,cpu {
+			sound-dai = <&ahub_i2s3>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&pcm5102>;
+		};
+	};
 };
 
 &codec {
@@ -398,6 +417,10 @@
 };
 
 &ahub_i2s1 {
+	status = "okay";
+};
+
+&ahub_i2s3 {
 	status = "okay";
 };
 

@@ -11,6 +11,16 @@
 / {
 	model = "OrangePi Zero2";
 	compatible = "xunlong,orangepi-zero2", "allwinner,sun50i-h616";
+
+	reg_vcc_wifi: reg_vcc_wifi {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc-wifi";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&pio 6 18 GPIO_ACTIVE_HIGH>; /* PG18 WL_REG_ON */
+		regulator-always-on;
+		enable-active-high;
+	};
 };
 
 &cpu0 {
@@ -22,10 +32,45 @@
 	allwinner,tx-delay-ps = <700>;
 	phy-mode = "rgmii";
 	phy-supply = <&reg_dcdce>;
+	status = "okay";
+};
+
+&gpu {
+	mali-supply = <&reg_dcdcc>;
+	status = "okay";
+};
+
+&hdmi {
+	hvcc-supply = <&reg_bldo1>;
+	status = "okay";
 };
 
 &mmc0 {
 	vmmc-supply = <&reg_dcdce>;
+};
+
+&mmc1 {
+	vmmc-supply = <&reg_dcdce>;
+	vqmmc-supply = <&reg_vcc_wifi>;
+	bus-width = <4>;
+	non-removable;
+	status = "okay";
+
+	wlan: wifi@1 {
+		reg = <1>;
+		compatible = "allwinner,aw859a";
+		interrupt-parent = <&pio>;
+		interrupts = <GIC_SPI 207 IRQ_TYPE_EDGE_RISING>;
+		interrupt-names = "host-wake";
+	};
+};
+
+&ohci0 {
+	status = "okay";
+};
+
+&ohci1 {
+	status = "okay";
 };
 
 &r_rsb {
@@ -104,14 +149,14 @@
 			reg_dcdca: dcdca {
 				regulator-always-on;
 				regulator-min-microvolt = <810000>;
-				regulator-max-microvolt = <1100000>;
+				regulator-max-microvolt = <1160000>;
 				regulator-name = "vdd-cpu";
 			};
 
 			reg_dcdcc: dcdcc {
 				regulator-always-on;
 				regulator-min-microvolt = <810000>;
-				regulator-max-microvolt = <990000>;
+				regulator-max-microvolt = <1160000>;
 				regulator-name = "vdd-gpu-sys";
 			};
 
@@ -142,4 +187,22 @@
 	vcc-pg-supply = <&reg_bldo1>;
 	vcc-ph-supply = <&reg_aldo1>;
 	vcc-pi-supply = <&reg_aldo1>;
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pins>, <&uart1_rts_cts_pins>;
+	uart-has-rtscts;
+	status = "okay";
+
+	bluetooth {
+		compatible = "brcm,bcm43438-bt";
+		clocks = <&rtc 1>;
+		clock-names = "lpo";
+		vbat-supply = <&reg_dcdce>;
+		vddio-supply = <&reg_dcdce>;
+		device-wakeup-gpios = <&r_pio 0 6 GPIO_ACTIVE_HIGH>; /* PL6 */
+		host-wakeup-gpios = <&r_pio 0 5 GPIO_ACTIVE_HIGH>; /* PL5 */
+		shutdown-gpios = <&r_pio 0 4 GPIO_ACTIVE_HIGH>; /* PL4 */
+	};
 };

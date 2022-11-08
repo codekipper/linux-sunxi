@@ -38,6 +38,7 @@ static int sun50i_cpufreq_get_efuse(u32 *versions)
 	struct device *cpu_dev;
 	u32 *speedbin, efuse_value;
 	size_t len;
+	int ret;
 
 	cpu_dev = get_cpu_device(0);
 	if (!cpu_dev)
@@ -47,9 +48,9 @@ static int sun50i_cpufreq_get_efuse(u32 *versions)
 	if (!np)
 		return -ENOENT;
 
-	if      (of_device_is_compatible(np, "allwinner,sun50i-h6-operating-points")) {}
-	else if (of_device_is_compatible(np, "allwinner,sun50i-h616-operating-points")) {}
-	else {
+	ret = of_device_is_compatible(np,
+				      "allwinner,sun50i-h6-operating-points");
+	if (!ret) {
 		of_node_put(np);
 		return -ENOENT;
 	}
@@ -161,7 +162,6 @@ static struct platform_driver sun50i_cpufreq_driver = {
 
 static const struct of_device_id sun50i_cpufreq_match_list[] = {
 	{ .compatible = "allwinner,sun50i-h6" },
-	{ .compatible = "allwinner,sun50i-h616" },
 	{}
 };
 MODULE_DEVICE_TABLE(of, sun50i_cpufreq_match_list);

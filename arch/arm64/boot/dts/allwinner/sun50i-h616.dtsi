@@ -524,6 +524,7 @@
 			reset-names = "stmmaceth";
 			syscon = <&syscon>;
 			status = "disabled";
+			aw-hdmi-codec-quirk;
 
 			mdio0: mdio {
 				compatible = "snps,dwmac-mdio";

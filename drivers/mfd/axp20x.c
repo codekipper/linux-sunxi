@@ -43,6 +43,7 @@ static const char * const axp20x_model_names[] = {
 	"AXP806",
 	"AXP809",
 	"AXP813",
+	"AXP1530",
 };
 
 static const struct regmap_range axp152_writeable_ranges[] = {
@@ -168,6 +169,24 @@ static const struct regmap_access_table axp806_volatile_table = {
 	.n_yes_ranges	= ARRAY_SIZE(axp806_volatile_ranges),
 };
 
+static const struct regmap_range axp1530_writeable_ranges[] = {
+	regmap_reg_range(AXP1530_ON_INDICATE, AXP1530_FREQUENCY),
+};
+
+static const struct regmap_range axp1530_volatile_ranges[] = {
+	regmap_reg_range(AXP1530_ON_INDICATE, AXP1530_FREQUENCY),
+};
+
+static const struct regmap_access_table axp1530_writeable_table = {
+	.yes_ranges = axp1530_writeable_ranges,
+	.n_yes_ranges = ARRAY_SIZE(axp1530_writeable_ranges),
+};
+
+static const struct regmap_access_table axp1530_volatile_table = {
+	.yes_ranges = axp1530_volatile_ranges,
+	.n_yes_ranges = ARRAY_SIZE(axp1530_volatile_ranges),
+};
+
 static const struct resource axp152_pek_resources[] = {
 	DEFINE_RES_IRQ_NAMED(AXP152_IRQ_PEK_RIS_EDGE, "PEK_DBR"),
 	DEFINE_RES_IRQ_NAMED(AXP152_IRQ_PEK_FAL_EDGE, "PEK_DBF"),
@@ -279,6 +298,15 @@ static const struct regmap_config axp806_regmap_config = {
 	.volatile_table	= &axp806_volatile_table,
 	.max_register	= AXP806_REG_ADDR_EXT,
 	.cache_type	= REGCACHE_RBTREE,
+};
+
+static const struct regmap_config axp1530_regmap_config = {
+	.reg_bits = 8,
+	.val_bits = 8,
+	.wr_table = &axp1530_writeable_table,
+	.volatile_table = &axp1530_volatile_table,
+	.max_register = AXP1530_FREQUENCY,
+	.cache_type = REGCACHE_RBTREE,
 };
 
 #define INIT_REGMAP_IRQ(_variant, _irq, _off, _mask)			\
@@ -502,6 +530,16 @@ static const struct regmap_irq axp809_regmap_irqs[] = {
 	INIT_REGMAP_IRQ(AXP809, GPIO0_INPUT,		4, 0),
 };
 
+static const struct regmap_irq axp1530_regmap_irqs[] = {
+	INIT_REGMAP_IRQ(AXP1530, KEY_L2H_EN, 0, 7),
+	INIT_REGMAP_IRQ(AXP1530, KEY_H2L_EN, 0, 6),
+	INIT_REGMAP_IRQ(AXP1530, POKSIRQ_EN, 0, 5),
+	INIT_REGMAP_IRQ(AXP1530, POKLIRQ_EN, 0, 4),
+	INIT_REGMAP_IRQ(AXP1530, DCDC3_UNDER, 0, 3),
+	INIT_REGMAP_IRQ(AXP1530, DCDC2_UNDER, 0, 2),
+	INIT_REGMAP_IRQ(AXP1530, TEMP_OVER, 0, 0),
+};
+
 static const struct regmap_irq_chip axp152_regmap_irq_chip = {
 	.name			= "axp152_irq_chip",
 	.status_base		= AXP152_IRQ1_STATE,
@@ -579,6 +617,18 @@ static const struct regmap_irq_chip axp809_regmap_irq_chip = {
 	.irqs			= axp809_regmap_irqs,
 	.num_irqs		= ARRAY_SIZE(axp809_regmap_irqs),
 	.num_regs		= 5,
+};
+
+static const struct regmap_irq_chip axp1530_regmap_irq_chip = {
+	.name = "axp1530_irq_chip",
+	.status_base = AXP1530_IRQ_STATUS1,
+	.ack_base = AXP1530_IRQ_STATUS1,
+	.mask_base = AXP1530_IRQ_ENABLE1,
+	.mask_invert = true,
+	.init_ack_masked = true,
+	.irqs = axp1530_regmap_irqs,
+	.num_irqs = ARRAY_SIZE(axp1530_regmap_irqs),
+	.num_regs = 1,
 };
 
 static const struct mfd_cell axp20x_cells[] = {
@@ -825,6 +875,13 @@ static const struct mfd_cell axp813_cells[] = {
 	},
 };
 
+static struct mfd_cell axp1530_cells[] = {
+	{
+		.id = 0,
+		.name = "axp20x-regulator",
+	},
+};
+
 static int axp20x_power_off(struct sys_off_data *data)
 {
 	struct axp20x_dev *axp20x = data->cb_data;
@@ -933,6 +990,12 @@ int axp20x_match_device(struct axp20x_dev *axp20x)
 		 * as the AXP803, rather than the AXP288.
 		 */
 		axp20x->regmap_irq_chip = &axp803_regmap_irq_chip;
+		break;
+	case AXP1530_ID:
+		axp20x->nr_cells = ARRAY_SIZE(axp1530_cells);
+		axp20x->cells = axp1530_cells;
+		axp20x->regmap_cfg = &axp1530_regmap_config;
+		axp20x->regmap_irq_chip = &axp1530_regmap_irq_chip;
 		break;
 	default:
 		dev_err(dev, "unsupported AXP20X ID %lu\n", axp20x->variant);

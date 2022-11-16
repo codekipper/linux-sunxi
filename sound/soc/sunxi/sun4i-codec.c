@@ -232,6 +232,34 @@
 
 /* TODO H3 DAP (Digital Audio Processing) bits */
 
+/* H616 differences */
+#define SUN50I_H616_CODEC_DAC_FIFOC		(0x10)
+
+#define SUN50I_DAC_AC_DAC_REG			(0x310)
+#define SUN50I_DAC_LEN					(15)
+#define SUN50I_DAC_REN					(14)
+#define SUN50I_LINEOUTL_EN				(13)
+#define SUN50I_LMUTE					(12)
+#define SUN50I_LINEOUTR_EN				(11)
+#define SUN50I_RMUTE					(10)
+#define SUN50I_RSWITCH					(9)
+#define SUN50I_RAMPEN					(8)
+#define SUN50I_LINEOUTL_SEL				(6)
+#define SUN50I_LINEOUTR_SEL				(5)
+#define SUN50I_LINEOUT_VOL				(0)
+
+#define SUN50I_DAC_AC_MIXER_REG				(0x314)
+#define SUN50I_LMIX_LDAC				(21)
+#define SUN50I_LMIX_RDAC				(20)
+#define SUN50I_RMIX_RDAC				(17)
+#define SUN50I_RMIX_LDAC				(16)
+#define SUN50I_LMIXEN					(11)
+#define SUN50I_RMIXEN					(10)
+
+#define SUN50I_DAC_AC_RAMP_REG			(0x31c)
+#define SUN50I_RAMP_STEP				(4)
+#define SUN50I_RDEN					(0)
+
 struct sun4i_codec {
 	struct device	*dev;
 	struct regmap	*regmap;
@@ -1231,6 +1259,136 @@ static const struct snd_soc_component_driver sun8i_a23_codec_codec = {
 	.endianness		= 1,
 };
 
+static int sun50i_lineout_event(struct snd_soc_dapm_widget *w,
+				  struct snd_kcontrol *k, int event)
+{
+	struct sun4i_codec *scodec = snd_soc_card_get_drvdata(w->dapm->card);
+
+	switch (event) {
+	case	SND_SOC_DAPM_POST_PMU:
+
+		regmap_update_bits(scodec->regmap, SUN50I_DAC_AC_RAMP_REG,
+			(0x1 << SUN50I_RDEN), (0x1 << SUN50I_RDEN));
+		msleep(25);
+
+		regmap_update_bits(scodec->regmap, SUN50I_DAC_AC_DAC_REG,
+				(0x1 << SUN50I_LINEOUTL_EN) | (0x1 << SUN50I_LINEOUTR_EN),
+				(0x1 << SUN50I_LINEOUTL_EN) | (0x1 << SUN50I_LINEOUTR_EN));
+		break;
+	case	SND_SOC_DAPM_PRE_PMD:
+
+		regmap_update_bits(scodec->regmap, SUN50I_DAC_AC_RAMP_REG,
+					(0x1 << SUN50I_RDEN), (0x0 << SUN50I_RDEN));
+		msleep(25);
+
+		regmap_update_bits(scodec->regmap, SUN50I_DAC_AC_DAC_REG,
+			(0x1 << SUN50I_LINEOUTL_EN) | (0x1 << SUN50I_LINEOUTR_EN),
+			(0x0 << SUN50I_LINEOUTL_EN) | (0x0 << SUN50I_LINEOUTR_EN));
+
+		break;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+static const DECLARE_TLV_DB_SCALE(digital_tlv, 0, -116, -7424);
+
+static const unsigned int lineout_tlv[] = {
+	TLV_DB_RANGE_HEAD(2),
+	0, 0, TLV_DB_SCALE_ITEM(0, 0, 1),
+	1, 31, TLV_DB_SCALE_ITEM(-4350, 150, 1),
+};
+
+/*lineoutL mux select */
+const char * const left_lineoutl_text[] = {
+	"LOMixer", "LROMixer",
+};
+
+static const struct soc_enum left_lineout_enum =
+SOC_ENUM_SINGLE(SUN50I_DAC_AC_DAC_REG, SUN50I_LINEOUTL_SEL,
+ARRAY_SIZE(left_lineoutl_text), left_lineoutl_text);
+
+static const struct snd_kcontrol_new left_lineout_mux =
+SOC_DAPM_ENUM("Left LINEOUT Mux", left_lineout_enum);
+
+/*lineoutR mux select */
+const char * const right_lineoutr_text[] = {
+	"ROMixer", "LROMixer",
+};
+
+static const struct soc_enum right_lineout_enum =
+SOC_ENUM_SINGLE(SUN50I_DAC_AC_DAC_REG, SUN50I_LINEOUTR_SEL,
+ARRAY_SIZE(right_lineoutr_text), right_lineoutr_text);
+
+static const struct snd_kcontrol_new right_lineout_mux =
+SOC_DAPM_ENUM("Right LINEOUT Mux", right_lineout_enum);
+
+static const struct snd_kcontrol_new sun50i_h616_codec_codec_controls[] = {
+
+	SOC_SINGLE_TLV("digital volume", SUN4I_CODEC_DAC_DPC,
+		       SUN4I_CODEC_DAC_DPC_DVOL, 0x3F, 0, digital_tlv),
+
+	SOC_SINGLE_TLV("LINEOUT volume", SUN50I_DAC_AC_DAC_REG,
+		       SUN50I_LINEOUT_VOL, 0x1F, 0, lineout_tlv),
+};
+
+static const struct snd_kcontrol_new left_output_mixer[] = {
+	SOC_DAPM_SINGLE("DACL Switch", SUN50I_DAC_AC_MIXER_REG,
+			SUN50I_LMIX_LDAC, 1, 0),
+	SOC_DAPM_SINGLE("DACR Switch", SUN50I_DAC_AC_MIXER_REG,
+			SUN50I_LMIX_RDAC, 1, 0),
+};
+
+static const struct snd_kcontrol_new right_output_mixer[] = {
+	SOC_DAPM_SINGLE("DACL Switch", SUN50I_DAC_AC_MIXER_REG,
+			SUN50I_RMIX_LDAC, 1, 0),
+	SOC_DAPM_SINGLE("DACR Switch", SUN50I_DAC_AC_MIXER_REG,
+			SUN50I_RMIX_RDAC, 1, 0),
+};
+
+static const struct snd_soc_dapm_widget sun50i_h616_codec_codec_widgets[] = {
+
+	/* Digital parts of the DACs */
+	SND_SOC_DAPM_SUPPLY("DAC Enable", SUN4I_CODEC_DAC_DPC,
+			    SUN4I_CODEC_DAC_DPC_EN_DA, 0, NULL, 0),
+
+	SND_SOC_DAPM_AIF_IN_E("DACL", "Codec Playback", 0,
+			      SUN50I_DAC_AC_DAC_REG, SUN50I_DAC_LEN, 0,
+			      NULL, 0),
+	SND_SOC_DAPM_AIF_IN_E("DACR", "Codec Playback", 0,
+			      SUN50I_DAC_AC_DAC_REG, SUN50I_DAC_REN, 0,
+			      NULL, 0),
+
+	SND_SOC_DAPM_MIXER("Left Output Mixer", SUN50I_DAC_AC_MIXER_REG,
+			   SUN50I_LMIXEN, 0, left_output_mixer,
+			   ARRAY_SIZE(left_output_mixer)),
+	SND_SOC_DAPM_MIXER("Right Output Mixer", SUN50I_DAC_AC_MIXER_REG,
+			   SUN50I_RMIXEN, 0, right_output_mixer,
+			   ARRAY_SIZE(right_output_mixer)),
+
+	SND_SOC_DAPM_MUX("Left LINEOUT Mux", SND_SOC_NOPM,
+			0, 0, &left_lineout_mux),
+	SND_SOC_DAPM_MUX("Right LINEOUT Mux", SND_SOC_NOPM,
+			0, 0, &right_lineout_mux),
+
+	SND_SOC_DAPM_OUTPUT("LINEOUTL"),
+	SND_SOC_DAPM_OUTPUT("LINEOUTR"),
+
+	SND_SOC_DAPM_LINE("LINEOUT", sun50i_lineout_event),
+};
+
+static const struct snd_soc_component_driver sun50i_h616_codec_codec = {
+	.controls		= sun50i_h616_codec_codec_controls,
+	.num_controls		= ARRAY_SIZE(sun50i_h616_codec_codec_controls),
+	.dapm_widgets		= sun50i_h616_codec_codec_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(sun50i_h616_codec_codec_widgets),
+	.idle_bias_on		= 1,
+	.use_pmdown_time	= 1,
+	.endianness		= 1,
+};
+
 static const struct snd_soc_component_driver sun4i_codec_component = {
 	.name			= "sun4i-codec",
 	.legacy_dai_naming	= 1,
@@ -1269,8 +1427,8 @@ static struct snd_soc_dai_driver dummy_cpu_dai = {
 		.stream_name	= "Capture",
 		.channels_min	= 1,
 		.channels_max	= 2,
-		.rates 		= SUN4I_CODEC_RATES,
-		.formats 	= SUN4I_CODEC_FORMATS,
+		.rates		= SUN4I_CODEC_RATES,
+		.formats	= SUN4I_CODEC_FORMATS,
 		.sig_bits	= 24,
 	 },
 };
@@ -1530,6 +1688,76 @@ static struct snd_soc_card *sun8i_v3s_codec_create_card(struct device *dev)
 	return card;
 };
 
+static const struct snd_soc_dapm_widget sun50i_codec_card_dapm_widgets[] = {
+	SND_SOC_DAPM_LINE("Line Out", NULL),
+	SND_SOC_DAPM_SPK("Speaker", sun4i_codec_spk_event),
+};
+
+/* Connect digital side enables to analog side widgets */
+static const struct snd_soc_dapm_route sun50i_codec_card_routes[] = {
+	/* DAC Routes */
+	{ "DACR", NULL, "DAC Enable" },
+	{ "DACL", NULL, "DAC Enable" },
+
+	{"Left Output Mixer", "DACR Switch", "DACR"},
+	{"Left Output Mixer", "DACL Switch", "DACL"},
+
+	{"Right Output Mixer", "DACL Switch", "DACL"},
+	{"Right Output Mixer", "DACR Switch", "DACR"},
+
+	{"Left LINEOUT Mux", "LOMixer", "Left Output Mixer"},
+	{"Left LINEOUT Mux", "LROMixer", "Right Output Mixer"},
+	{"Right LINEOUT Mux", "ROMixer", "Right Output Mixer"},
+	{"Right LINEOUT Mux", "LROMixer", "Left Output Mixer"},
+
+	{"LINEOUTL", NULL, "Left LINEOUT Mux"},
+	{"LINEOUTR", NULL, "Right LINEOUT Mux"},
+
+	{"LINEOUT", NULL, "LINEOUTL"},
+	{"LINEOUT", NULL, "LINEOUTR"},
+
+	{"Speaker", NULL, "LINEOUTL"},
+	{"Speaker", NULL, "LINEOUTR"},
+};
+
+static const struct snd_kcontrol_new sun50i_card_controls[] = {
+	SOC_DAPM_PIN_SWITCH("LINEOUT"),
+};
+
+static struct snd_soc_card *sun50i_h616_codec_create_card(struct device *dev)
+{
+	struct snd_soc_card *card;
+	int ret;
+
+	card = devm_kzalloc(dev, sizeof(*card), GFP_KERNEL);
+	if (!card)
+		return ERR_PTR(-ENOMEM);
+
+	card->dai_link = sun4i_codec_create_link(dev, &card->num_links);
+	if (!card->dai_link)
+		return ERR_PTR(-ENOMEM);
+
+	card->dai_link->playback_only = true;
+	card->dai_link->capture_only = false;
+
+	card->dev		= dev;
+	card->owner		= THIS_MODULE;
+	card->name		= "H616 Audio Codec";
+	card->controls		= sun50i_card_controls;
+	card->num_controls	= ARRAY_SIZE(sun50i_card_controls),
+	card->dapm_widgets	= sun50i_codec_card_dapm_widgets;
+	card->num_dapm_widgets	= ARRAY_SIZE(sun50i_codec_card_dapm_widgets);
+	card->dapm_routes	= sun50i_codec_card_routes;
+	card->num_dapm_routes	= ARRAY_SIZE(sun50i_codec_card_routes);
+	card->fully_routed	= true;
+
+	ret = snd_soc_of_parse_audio_routing(card, "allwinner,audio-routing");
+	if (ret)
+		dev_warn(dev, "failed to parse audio-routing: %d\n", ret);
+
+	return card;
+};
+
 static const struct regmap_config sun4i_codec_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
@@ -1570,6 +1798,14 @@ static const struct regmap_config sun8i_v3s_codec_regmap_config = {
 	.reg_stride	= 4,
 	.val_bits	= 32,
 	.max_register	= SUN8I_H3_CODEC_ADC_DBG,
+};
+
+static const struct regmap_config sun50i_h616_codec_regmap_config = {
+	.reg_bits	= 32,
+	.reg_stride	= 4,
+	.val_bits	= 32,
+	.max_register	= SUN50I_DAC_AC_RAMP_REG,
+	.cache_type = REGCACHE_NONE,
 };
 
 struct sun4i_codec_quirks {
@@ -1656,6 +1892,19 @@ static const struct sun4i_codec_quirks sun8i_v3s_codec_quirks = {
 	.has_reset	= true,
 };
 
+static const struct sun4i_codec_quirks sun50i_h616_codec_quirks = {
+	.regmap_config	= &sun50i_h616_codec_regmap_config,
+	/*
+	 * TODO The codec structure should be split out, like
+	 * H616, when adding digital audio processing support.
+	 */
+	.codec		= &sun50i_h616_codec_codec,
+	.create_card	= sun50i_h616_codec_create_card,
+	.reg_dac_fifoc	= REG_FIELD(SUN50I_H616_CODEC_DAC_FIFOC, 0, 31),
+	.reg_dac_txdata	= SUN8I_H3_CODEC_DAC_TXDATA,
+	.has_reset	= true,
+};
+
 static const struct of_device_id sun4i_codec_of_match[] = {
 	{
 		.compatible = "allwinner,sun4i-a10-codec",
@@ -1680,6 +1929,10 @@ static const struct of_device_id sun4i_codec_of_match[] = {
 	{
 		.compatible = "allwinner,sun8i-v3s-codec",
 		.data = &sun8i_v3s_codec_quirks,
+	},
+	{
+		.compatible = "allwinner,sun50i-h616-codec",
+		.data = &sun50i_h616_codec_quirks,
 	},
 	{}
 };
@@ -1789,10 +2042,14 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 	scodec->playback_dma_data.maxburst = 8;
 	scodec->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 
-	/* DMA configuration for RX FIFO */
-	scodec->capture_dma_data.addr = res->start + quirks->reg_adc_rxdata;
-	scodec->capture_dma_data.maxburst = 8;
-	scodec->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+	if (!of_device_is_compatible(scodec->dev->of_node,
+				    "allwinner,sun50i-h616-codec")) {
+		/* DMA configuration for RX FIFO */
+		scodec->capture_dma_data.addr = res->start +
+						quirks->reg_adc_rxdata;
+		scodec->capture_dma_data.maxburst = 8;
+		scodec->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+	}
 
 	ret = devm_snd_soc_register_component(&pdev->dev, quirks->codec,
 				     &sun4i_codec_dai, 1);

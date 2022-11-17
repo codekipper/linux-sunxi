@@ -167,6 +167,10 @@ static int sunxi_sndahub_hw_params(struct snd_pcm_substream *substream,
 	unsigned int freq;
 	int ret;
 
+	printk("COOPS %s channels is %d, physical width is %d, rate is %d, period size is %d\n",
+		__func__, params_channels(params), params_physical_width(params),
+		params_rate(params), params_period_size(params));
+
 	switch (params_rate(params)) {
 	case 8000:
 	case 16000:

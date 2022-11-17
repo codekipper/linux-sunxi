@@ -12,6 +12,7 @@
 
 #include <linux/module.h>
 #include <sound/soc.h>
+#include <sound/pcm_params.h>
 
 #define DRV_NAME "sunxi-hdmi"
 
@@ -24,6 +25,10 @@ static int sunxi_hdmi_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
 
 	unsigned int freq, clk_div;
+
+	printk("COOPS %s channels is %d, physical width is %d, rate is %d, period size is %d\n",
+		__func__, params_channels(params), params_physical_width(params),
+		params_rate(params), params_period_size(params));
 
 	switch (params_rate(params)) {
 

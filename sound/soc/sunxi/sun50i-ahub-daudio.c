@@ -385,6 +385,10 @@ static int sunxi_ahub_daudio_hw_params(struct snd_pcm_substream *substream,
 			| (sunxi_ahub_daudio->daudio_master<<12)),
 		sunxi_ahub_daudio->tdm_num);
 
+	printk("COOPS %s channels is %d, physical width is %d, rate is %d, period size is %d\n",
+		__func__, params_channels(params), params_physical_width(params),
+		params_rate(params), params_period_size(params));
+
 	switch (params_format(params)) {
 	case	SNDRV_PCM_FORMAT_S16_LE:
 		/*
@@ -394,6 +398,7 @@ static int sunxi_ahub_daudio_hw_params(struct snd_pcm_substream *substream,
 		 * Not HDMI card, sunxi_hdmi maybe a NULL pointer.
 		 */
 		if (sunxi_ahub_daudio->tdm_num == SUNXI_AHUB_HDMI_ID) {
+			printk("COOPS %s HDMI stuff\n", __func__);
 			if (0)
 				regmap_update_bits(sunxi_ahub_daudio->regmap,
 					SUNXI_AHUB_I2S_FMT0(
@@ -575,6 +580,7 @@ static int sunxi_ahub_daudio_set_clkdiv(struct snd_soc_dai *dai,
 					snd_soc_dai_get_drvdata(dai);
 	unsigned int bclk_div, div_ratio;	
 
+	printk("%s COOPS I2S%d tdm_config %d clk_div %d period %d\n", __func__, sunxi_ahub_daudio->tdm_num, sunxi_ahub_daudio->tdm_config , clk_div, sunxi_ahub_daudio->pcm_lrck_period);
 	if (sunxi_ahub_daudio->tdm_config)
 		/* I2S/TDM two channel mode */
 		div_ratio = clk_div / (sunxi_ahub_daudio->pcm_lrck_period * 2);

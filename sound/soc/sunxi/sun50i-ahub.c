@@ -595,6 +595,10 @@ static int sunxi_ahub_codec_dai_hw_params(struct snd_pcm_substream *substream,
 {
 	struct sunxi_ahub_priv *sunxi_ahub = snd_soc_dai_get_drvdata(dai);
 
+	printk("COOPS %s channels is %d, physical width is %d, rate is %d, period size is %d\n",
+		__func__, params_channels(params), params_physical_width(params),
+		params_rate(params), params_period_size(params));
+
 	switch (params_format(params)) {
 	case	SNDRV_PCM_FORMAT_S16_LE:
 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {

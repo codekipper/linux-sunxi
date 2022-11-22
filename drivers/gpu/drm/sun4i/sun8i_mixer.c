@@ -339,6 +339,20 @@ static const struct regmap_config sun8i_mixer_regmap_config = {
 	.max_register	= 0xffffc, /* guessed */
 };
 
+static const struct regmap_config sun8i_top_regmap_config = {
+    .reg_bits = 32,
+    .val_bits = 32,
+    .reg_stride = 4,
+    .max_register = 0x3c,
+};
+
+static const struct regmap_config sun8i_disp_regmap_config = {
+    .reg_bits = 32,
+    .val_bits = 32,
+    .reg_stride = 4,
+    .max_register = 0x20000,
+};
+
 static int sun8i_mixer_of_get_id(struct device_node *node)
 {
 	struct device_node *ep, *remote;
@@ -428,6 +442,31 @@ static int sun8i_mixer_bind(struct device *dev, struct device *master,
 		dev_err(dev, "Couldn't create the mixer regmap\n");
 		return PTR_ERR(mixer->engine.regs);
 	}
+
+	if (mixer->cfg->is_de33)
+    {
+        regs = devm_platform_ioremap_resource(pdev, 1);
+        if (IS_ERR(regs))
+            return PTR_ERR(regs);
+
+        mixer->top_regs = devm_regmap_init_mmio(dev, regs, &sun8i_top_regmap_config);
+        if (IS_ERR(mixer->top_regs))
+        {
+            dev_err(dev, "Couldn't create the top regmap\n");
+            return PTR_ERR(mixer->top_regs);
+        }
+
+        regs = devm_platform_ioremap_resource(pdev, 2);
+        if (IS_ERR(regs))
+            return PTR_ERR(regs);
+
+        mixer->disp_regs = devm_regmap_init_mmio(dev, regs, &sun8i_disp_regmap_config);
+        if (IS_ERR(mixer->disp_regs))
+        {
+            dev_err(dev, "Couldn't create the disp regmap\n");
+            return PTR_ERR(mixer->disp_regs);
+        }
+    }
 
 	mixer->reset = devm_reset_control_get(dev, NULL);
 	if (IS_ERR(mixer->reset)) {

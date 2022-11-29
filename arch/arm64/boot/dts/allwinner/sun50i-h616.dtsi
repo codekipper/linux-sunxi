@@ -979,7 +979,8 @@
 		};
 
 		tcon_top: tcon-top@6510000 {
-			compatible = "allwinner,sun50i-h6-tcon-top";
+			compatible = "allwinner,sun50i-h616-tcon-top",
+				     "allwinner,sun50i-h6-tcon-top";
 			reg = <0x06510000 0x1000>;
 			clocks = <&ccu CLK_BUS_TCON_TOP>,
 				 <&ccu CLK_TCON_TV0>;
@@ -1075,7 +1076,8 @@
 		};
 
 		tcon_tv: lcd-controller@6515000 {
-			compatible = "allwinner,sun50i-h6-tcon-tv",
+			compatible = "allwinner,sun50i-h616-tcon-tv",
+				     "allwinner,sun50i-h6-tcon-tv",
 				     "allwinner,sun8i-r40-tcon-tv";
 			reg = <0x06515000 0x1000>;
 			interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;

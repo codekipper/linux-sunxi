@@ -1454,6 +1454,54 @@ static int sun8i_r40_tcon_tv_set_mux(struct sun4i_tcon *tcon,
 	return 0;
 }
 
+static int sun50i_h616_tcon_tv_set_mux(struct sun4i_tcon *tcon, const struct drm_encoder *encoder)
+{
+    struct device_node *port, *remote;
+    struct platform_device *pdev;
+    int id, ret;
+
+    /* find TCON TOP platform device and TCON id */
+
+    port = of_graph_get_port_by_id(tcon->dev->of_node, 0);
+    if (!port)
+        return -EINVAL;
+
+    id = sun4i_tcon_of_get_id_from_port(port);
+    of_node_put(port);
+
+    remote = of_graph_get_remote_node(tcon->dev->of_node, 0, -1);
+    if (!remote)
+        return -EINVAL;
+
+    pdev = of_find_device_by_node(remote);
+    of_node_put(remote);
+    if (!pdev)
+        return -EINVAL;
+
+    if (IS_ENABLED(CONFIG_DRM_SUN8I_TCON_TOP) &&
+        encoder->encoder_type == DRM_MODE_ENCODER_TMDS)
+    {
+        ret = sun8i_tcon_top_set_hdmi_src(&pdev->dev, id);
+        if (ret)
+        {
+            put_device(&pdev->dev);
+            return ret;
+        }
+    }
+
+    if (IS_ENABLED(CONFIG_DRM_SUN8I_TCON_TOP))
+    {
+        ret = sun8i_tcon_top_de_config(&pdev->dev, tcon->id, id);
+        if (ret)
+        {
+            put_device(&pdev->dev);
+            return ret;
+        }
+    }
+
+    return 0;
+}
+
 static const struct sun4i_tcon_quirks sun4i_a10_quirks = {
 	.has_channel_0		= true,
 	.has_channel_1		= true,
@@ -1549,6 +1597,12 @@ static const struct sun4i_tcon_quirks sun20i_d1_lcd_quirks = {
 	.set_mux		= sun8i_r40_tcon_tv_set_mux,
 };
 
+static const struct sun4i_tcon_quirks sun50i_h616_tv_quirks = {
+    .has_channel_1 = true,
+    .polarity_in_ch0 = true,
+    .set_mux = sun50i_h616_tcon_tv_set_mux,
+};
+
 /* sun4i_drv uses this list to check if a device node is a TCON */
 const struct of_device_id sun4i_tcon_of_table[] = {
 	{ .compatible = "allwinner,sun4i-a10-tcon", .data = &sun4i_a10_quirks },
@@ -1568,6 +1622,7 @@ const struct of_device_id sun4i_tcon_of_table[] = {
 	{ .compatible = "allwinner,sun9i-a80-tcon-tv", .data = &sun9i_a80_tcon_tv_quirks },
 	{ .compatible = "allwinner,sun20i-d1-tcon-lcd", .data = &sun20i_d1_lcd_quirks },
 	{ .compatible = "allwinner,sun20i-d1-tcon-tv", .data = &sun8i_r40_tv_quirks },
+	{.compatible = "allwinner,sun50i-h616-tcon-tv", .data = &sun50i_h616_tv_quirks},
 	{ }
 };
 MODULE_DEVICE_TABLE(of, sun4i_tcon_of_table);

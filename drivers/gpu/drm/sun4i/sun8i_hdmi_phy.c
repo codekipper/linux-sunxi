@@ -123,6 +123,76 @@ static const struct dw_hdmi_phy_config sun50i_h6_phy_config[] = {
 	{ ~0UL,	     0x0000, 0x0000, 0x0000}
 };
 
+static const struct dw_hdmi_mpll_config sun50i_h616_mpll_cfg[] = {
+    {
+        27000000,
+        {
+            {0x00b3, 0x0003},
+            {0x2153, 0x0003},
+            {0x40f3, 0x0003},
+        },
+    },
+    {
+        74250000,
+        {
+            {0x0072, 0x0003},
+            {0x2145, 0x0003},
+            {0x4061, 0x0003},
+        },
+    },
+    {
+        148500000,
+        {
+            {0x0051, 0x0003},
+            {0x214c, 0x0003},
+            {0x4064, 0x0003},
+        },
+    },
+    {
+        297000000,
+        {
+            {0x0040, 0x0003},
+            {0x3b4c, 0x0003},
+            {0x5a64, 0x0003},
+        },
+    },
+    {
+        594000000,
+        {
+            {0x1a40, 0x0003},
+            {0x3b4c, 0x0003},
+            {0x5a64, 0x0003},
+        },
+    },
+    {
+        ~0UL,
+        {
+            {0x0000, 0x0000},
+            {0x0000, 0x0000},
+            {0x0000, 0x0000},
+        },
+    }};
+
+static const struct dw_hdmi_curr_ctrl sun50i_h616_cur_ctr[] = {
+    /* pixelclk    bpp8    bpp10   bpp12 */
+    { 27000000, { 0x0012, 0x0000, 0x0000 }, },
+    { 74250000, { 0x0013, 0x0013, 0x0013 }, },
+	{ 148500000, { 0x0019, 0x0019, 0x0019 }, },
+	{ 297000000, { 0x0019, 0x001b, 0x0019 }, },
+	{ 594000000, { 0x0010, 0x0010, 0x0010 }, },
+	{ ~0UL, { 0x0000, 0x0000, 0x0000 }, }
+};
+
+static const struct dw_hdmi_phy_config sun50i_h616_phy_config[] = {
+    /*pixelclk   symbol   term   vlev*/
+    {27000000, 0x8009, 0x0007, 0x02b0},
+    {74250000, 0x8019, 0x0004, 0x0290},
+    {148500000, 0x8019, 0x0004, 0x0290},
+    {297000000, 0x8039, 0x0004, 0x022b},
+    {594000000, 0x8029, 0x0000, 0x008a},
+    {~0UL, 0x0000, 0x0000, 0x0000}
+};
+
 static void sun8i_hdmi_phy_set_polarity(struct sun8i_hdmi_phy *phy,
 					const struct drm_display_mode *mode)
 {
@@ -514,6 +584,16 @@ static void sun8i_hdmi_phy_init_h3(struct sun8i_hdmi_phy *phy)
 	phy->rcal = (val & SUN8I_HDMI_PHY_ANA_STS_RCAL_MASK) >> 2;
 }
 
+static void sun50i_hdmi_phy_init_h616(struct sun8i_hdmi_phy *phy)
+{
+    regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_REXT_CTRL_REG,
+                       SUN8I_HDMI_PHY_REXT_CTRL_REXT_EN,
+                       SUN8I_HDMI_PHY_REXT_CTRL_REXT_EN);
+
+    regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_REXT_CTRL_REG,
+                       0xffff0000, 0x80c00000);
+}
+
 int sun8i_hdmi_phy_init(struct sun8i_hdmi_phy *phy)
 {
 	int ret;
@@ -625,6 +705,13 @@ static const struct sun8i_hdmi_phy_variant sun50i_h6_hdmi_phy = {
 	.phy_init = &sun50i_hdmi_phy_init_h6,
 };
 
+static const struct sun8i_hdmi_phy_variant sun50i_h616_hdmi_phy = {
+    .cur_ctr = sun50i_h616_cur_ctr,
+    .mpll_cfg = sun50i_h616_mpll_cfg,
+    .phy_cfg = sun50i_h616_phy_config,
+    .phy_init = &sun50i_hdmi_phy_init_h616,
+};
+
 static const struct of_device_id sun8i_hdmi_phy_of_table[] = {
 	{
 		.compatible = "allwinner,sun8i-a83t-hdmi-phy",
@@ -645,6 +732,10 @@ static const struct of_device_id sun8i_hdmi_phy_of_table[] = {
 	{
 		.compatible = "allwinner,sun50i-h6-hdmi-phy",
 		.data = &sun50i_h6_hdmi_phy,
+	},
+	{
+		.compatible = "allwinner,sun50i-h616-hdmi-phy",
+		.data = &sun50i_h616_hdmi_phy,
 	},
 	{ /* sentinel */ }
 };

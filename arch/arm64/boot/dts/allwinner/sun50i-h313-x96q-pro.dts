@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: (GPL-2.0+ or MIT)
 /*
- * Copyright (C) 2021 Arm Ltd.
  */
 
 /dts-v1/;
@@ -12,11 +11,11 @@
 
 / {
 	model = "X96Q Pro";
-	compatible = "sunnzo,x96Q-pro", "allwinner,sun50i-h616";
+	compatible = "sunnzo,x96q-pro", "allwinner,sun50i-h616";
 
 	aliases {
-		ethernet0 = &emac1;
 		serial0 = &uart0;
+		ethernet0 = &emac1;
 		ethernet1 = &wlan;
 	};
 
@@ -119,7 +118,6 @@
 	status = "okay";
 };
 
-
 &emac1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&rmii_pins>;
@@ -131,13 +129,8 @@
 	status = "okay";
 };
 
-&gpu {
-	mali-supply = <&reg_dcdcc>;
-	status = "okay";
-};
-
 &hdmi {
-	hvcc-supply = <&reg_bldo1>;
+	hvcc-supply = <&reg_aldo1>;
 	status = "okay";
 };
 
@@ -159,14 +152,14 @@
 };
 
 &mmc0 {
-	vmmc-supply = <&reg_dcdce>;
+	vmmc-supply = <&reg_dldo1>;
 	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;	/* PF6 */
 	bus-width = <4>;
 	status = "okay";
 };
 
 &mmc1 {
-	vmmc-supply = <&reg_dcdce>;
+	vmmc-supply = <&reg_dldo1>;
 	vqmmc-supply = <&reg_vcc_wifi>;
 	mmc-pwrseq = <&wifi_pwrseq>;
 	bus-width = <4>;
@@ -185,8 +178,8 @@
 };
 
 &mmc2 {
-	vmmc-supply = <&reg_dcdce>;
-	vqmmc-supply = <&reg_bldo1>;
+	vmmc-supply = <&reg_dldo1>;
+	vqmmc-supply = <&reg_aldo1>;
 	bus-width = <8>;
 	non-removable;
 	cap-mmc-hw-reset;
@@ -203,117 +196,59 @@
 	status = "okay";
 };
 
-&r_rsb {
+&r_i2c {
 	status = "okay";
 
-	axp305: pmic@745 {
-		compatible = "x-powers,axp305", "x-powers,axp805",
-			     "x-powers,axp806";
-		interrupt-controller;
-		#interrupt-cells = <1>;
-		reg = <0x745>;
+	axp1530: pmic@36 {
+		compatible = "x-powers,axp1530";
+		reg = <0x36>;
+		wakeup-source;
 
-		x-powers,self-working-mode;
-		vina-supply = <&reg_vcc5v>;
-		vinb-supply = <&reg_vcc5v>;
-		vinc-supply = <&reg_vcc5v>;
-		vind-supply = <&reg_vcc5v>;
-		vine-supply = <&reg_vcc5v>;
-		aldoin-supply = <&reg_vcc5v>;
-		bldoin-supply = <&reg_vcc5v>;
-		cldoin-supply = <&reg_vcc5v>;
-
-		regulators {
-			reg_aldo1: aldo1 {
+		regulators{
+			reg_dcdc1: dcdc1 {
+				regulator-name = "axp1530-dcdc1";
+				regulator-min-microvolt = <500000>;
+				regulator-max-microvolt = <3400000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
 				regulator-always-on;
-				regulator-min-microvolt = <3300000>;
-				regulator-max-microvolt = <3300000>;
-				regulator-name = "vcc-sys";
 			};
 
-			/* Enabled by the Android BSP */
-			reg_aldo2: aldo2 {
-				regulator-min-microvolt = <3300000>;
-				regulator-max-microvolt = <3300000>;
-				regulator-name = "vcc3v3-ext";
-				status = "disabled";
-			};
-
-			/* Enabled by the Android BSP */
-			reg_aldo3: aldo3 {
-				regulator-min-microvolt = <3300000>;
-				regulator-max-microvolt = <3300000>;
-				regulator-name = "vcc3v3-ext2";
-				status = "disabled";
-			};
-
-			reg_bldo1: bldo1 {
+			reg_dcdc2: dcdc2 {
+				regulator-name = "axp1530-dcdc2";
+				regulator-min-microvolt = <500000>;
+				regulator-max-microvolt = <1540000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-ramp-delay = <200>;
 				regulator-always-on;
+			};
+
+			reg_dcdc3: dcdc3 {
+				regulator-name = "axp1530-dcdc3";
+				regulator-min-microvolt = <500000>;
+				regulator-max-microvolt = <1840000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+			};
+
+			reg_aldo1: ldo1 {
+				regulator-name = "axp1530-aldo1";
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <1800000>;
-				regulator-name = "vcc1v8";
-			};
-
-			/* Enabled by the Android BSP */
-			reg_bldo2: bldo2 {
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-				regulator-name = "vcc1v8-2";
-				status = "disabled";
-			};
-
-			bldo3 {
-				/* unused */
-			};
-
-			bldo4 {
-				/* unused */
-			};
-
-			cldo1 {
-				regulator-min-microvolt = <2500000>;
-				regulator-max-microvolt = <2500000>;
-				regulator-name = "vcc2v5";
-			};
-
-			cldo2 {
-				/* unused */
-			};
-
-			cldo3 {
-				/* unused */
-			};
-
-			reg_dcdca: dcdca {
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
 				regulator-always-on;
-				regulator-min-microvolt = <810000>;
-				regulator-max-microvolt = <1100000>;
-				regulator-name = "vdd-cpu";
 			};
 
-			reg_dcdcc: dcdcc {
-				regulator-always-on;
-				regulator-min-microvolt = <810000>;
-				regulator-max-microvolt = <990000>;
-				regulator-name = "vdd-gpu-sys";
-			};
-
-			reg_dcdcd: dcdcd {
-				regulator-always-on;
-				regulator-min-microvolt = <1360000>;
-				regulator-max-microvolt = <1360000>;
-				regulator-name = "vdd-dram";
-			};
-
-			reg_dcdce: dcdce {
-				regulator-always-on;
+			reg_dldo1: ldo2 {
+				regulator-name = "axp1530-dldo1";
 				regulator-min-microvolt = <3300000>;
 				regulator-max-microvolt = <3300000>;
-				regulator-name = "vcc-eth-mmc";
-			};
-
-			sw {
-				/* unused */
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
 			};
 		};
 	};

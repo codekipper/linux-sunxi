@@ -55,6 +55,21 @@ sun8i_dw_hdmi_mode_valid_h6(struct dw_hdmi *hdmi, void *data,
 	return MODE_OK;
 }
 
+static enum drm_mode_status
+sun8i_dw_hdmi_mode_valid_h616(struct dw_hdmi *hdmi, void *data,
+                              const struct drm_display_info *info,
+                              const struct drm_display_mode *mode)
+{
+    /*
+     * Controller support maximum of 594 MHz, which correlates to
+     * 4K@60Hz 4:4:4 or RGB.
+     */
+    if (mode->clock > 594000)
+        return MODE_CLOCK_HIGH;
+
+    return MODE_OK;
+}
+
 static bool sun8i_dw_hdmi_node_is_tcon_top(struct device_node *node)
 {
 	return IS_ENABLED(CONFIG_DRM_SUN8I_TCON_TOP) &&
@@ -251,6 +266,11 @@ static const struct sun8i_dw_hdmi_quirks sun50i_h6_quirks = {
 	.use_drm_infoframe = true,
 };
 
+static const struct sun8i_dw_hdmi_quirks sun50i_h616_quirks = {
+	.mode_valid = sun8i_dw_hdmi_mode_valid_h616,
+	.use_drm_infoframe = true,
+};
+
 static const struct of_device_id sun8i_dw_hdmi_dt_ids[] = {
 	{
 		.compatible = "allwinner,sun8i-a83t-dw-hdmi",
@@ -259,6 +279,10 @@ static const struct of_device_id sun8i_dw_hdmi_dt_ids[] = {
 	{
 		.compatible = "allwinner,sun50i-h6-dw-hdmi",
 		.data = &sun50i_h6_quirks,
+	},
+	{
+		.compatible = "allwinner,sun50i-h616-dw-hdmi",
+		.data = &sun50i_h616_quirks,
 	},
 	{ /* sentinel */ },
 };

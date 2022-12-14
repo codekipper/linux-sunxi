@@ -34,6 +34,14 @@
 		};
 	};
 
+	reg_vcc3v3: vcc3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+	};
+
 	reg_vcc5v: vcc5v {
 		/* board wide 5V supply directly from the DC input */
 		compatible = "regulator-fixed";
@@ -152,7 +160,7 @@
 };
 
 &mmc0 {
-	vmmc-supply = <&reg_dldo1>;
+	vmmc-supply = <&reg_vcc3v3>;
 	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;	/* PF6 */
 	bus-width = <4>;
 	status = "okay";
@@ -194,6 +202,14 @@
 
 &ohci2 {
 	status = "okay";
+};
+
+&pio {
+	vcc-pc-supply = <&reg_vcc3v3>;
+	vcc-pf-supply = <&reg_vcc3v3>;
+	vcc-pg-supply = <&reg_vcc3v3>;
+	vcc-ph-supply = <&reg_vcc3v3>;
+	vcc-pi-supply = <&reg_vcc3v3>;
 };
 
 &r_i2c {

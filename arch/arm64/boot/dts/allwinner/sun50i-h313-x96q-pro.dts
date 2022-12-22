@@ -8,15 +8,18 @@
 
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/leds/common.h>
 
 / {
 	model = "X96Q Pro";
 	compatible = "sunnzo,x96q-pro", "allwinner,sun50i-h616";
 
 	aliases {
-		serial0 = &uart0;
+		mmc0 = &mmc0;
+		mmc2 = &mmc2;
 		ethernet0 = &emac1;
 		ethernet1 = &wlan;
+		serial0 = &uart0;
 	};
 
 	chosen {
@@ -32,14 +35,6 @@
 				remote-endpoint = <&hdmi_out_con>;
 			};
 		};
-	};
-
-	reg_vcc3v3: vcc3v3 {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc3v3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		regulator-always-on;
 	};
 
 	reg_vcc5v: vcc5v {
@@ -87,7 +82,7 @@
 		openvfd_chars = [02 04 03 02 01];
 		openvfd_dot_bits = [00 01 03 02 04 05 06];
 		openvfd_display_type = <0x03000001>;
-		status = "okay";
+		//status = "okay";
 	};
 
 	sound-spdif {
@@ -114,6 +109,30 @@
 	status = "okay";
 };
 
+&cpu0 {
+	cpu-supply = <&reg_dcdc2>;
+	operating-points-v2 = <&cpu_opp_table_h313>;
+	status = "okay";
+};
+
+&cpu1 {
+	cpu-supply = <&reg_dcdc2>;
+	operating-points-v2 = <&cpu_opp_table_h313>;
+	status = "okay";
+};
+
+&cpu2 {
+	cpu-supply = <&reg_dcdc2>;
+	operating-points-v2 = <&cpu_opp_table_h313>;
+	status = "okay";
+};
+
+&cpu3 {
+	cpu-supply = <&reg_dcdc2>;
+	operating-points-v2 = <&cpu_opp_table_h313>;
+	status = "okay";
+};
+
 &de {
 	status = "okay";
 };
@@ -122,7 +141,19 @@
 	status = "okay";
 };
 
+&ehci1 {
+	status = "okay";
+};
+
 &ehci2 {
+	status = "okay";
+};
+
+&ehci3 {
+	status = "okay";
+};
+
+&ehci0 {
 	status = "okay";
 };
 
@@ -134,6 +165,11 @@
 	phy-supply = <&reg_aldo1>;
 	allwinner,rx-delay-ps = <3100>;
 	allwinner,tx-delay-ps = <700>;
+	status = "okay";
+};
+
+&gpu {
+	mali-supply = <&reg_dcdc1>;
 	status = "okay";
 };
 
@@ -153,15 +189,15 @@
 };
 
 &mdio1 {
-	rmii_phy: ethernet-phy@1 {
+	rmii_phy: ethernet-phy@0 {
 		compatible = "ethernet-phy-ieee802.3-c22";
-		reg = <1>;
+		reg = <0>;
 	};
 };
 
 &mmc0 {
-	vmmc-supply = <&reg_vcc3v3>;
-	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;	/* PF6 */
+	vmmc-supply = <&reg_dldo1>;
+	broken-cd;
 	bus-width = <4>;
 	status = "okay";
 };
@@ -172,7 +208,7 @@
 	mmc-pwrseq = <&wifi_pwrseq>;
 	bus-width = <4>;
 	non-removable;
-	status = "okay";
+	//status = "okay";
 
 	wlan: wifi@1 {
 		reg = <1>;
@@ -187,12 +223,9 @@
 
 &mmc2 {
 	vmmc-supply = <&reg_dldo1>;
-	vqmmc-supply = <&reg_aldo1>;
 	bus-width = <8>;
 	non-removable;
 	cap-mmc-hw-reset;
-	mmc-ddr-1_8v;
-	mmc-hs200-1_8v;
 	status = "okay";
 };
 
@@ -200,78 +233,70 @@
 	status = "okay";
 };
 
+&ohci1 {
+	status = "okay";
+};
+
 &ohci2 {
 	status = "okay";
 };
 
-&pio {
-	vcc-pc-supply = <&reg_vcc3v3>;
-	vcc-pf-supply = <&reg_vcc3v3>;
-	vcc-pg-supply = <&reg_vcc3v3>;
-	vcc-ph-supply = <&reg_vcc3v3>;
-	vcc-pi-supply = <&reg_vcc3v3>;
+&ohci3 {
+	status = "okay";
 };
 
 &r_i2c {
 	status = "okay";
 
-	axp1530: pmic@36 {
-		compatible = "x-powers,axp1530";
+	axp313a: pmic@36 {
+		compatible = "x-powers,axp313a";
 		reg = <0x36>;
 		wakeup-source;
+		vin1-supply = <&reg_vcc5v>;
+		vin2-supply = <&reg_vcc5v>;
+		vin3-supply = <&reg_vcc5v>;
 
-		regulators{
+		regulators {
 			reg_dcdc1: dcdc1 {
-				regulator-name = "axp1530-dcdc1";
-				regulator-min-microvolt = <500000>;
-				regulator-max-microvolt = <3400000>;
-				regulator-step-delay-us = <25>;
-				regulator-final-delay-us = <50>;
 				regulator-always-on;
+				regulator-min-microvolt = <810000>;
+				regulator-max-microvolt = <1160000>;
+				regulator-name = "vdd-gpu";
 			};
 
 			reg_dcdc2: dcdc2 {
-				regulator-name = "axp1530-dcdc2";
-				regulator-min-microvolt = <500000>;
-				regulator-max-microvolt = <1540000>;
-				regulator-step-delay-us = <25>;
-				regulator-final-delay-us = <50>;
-				regulator-ramp-delay = <200>;
 				regulator-always-on;
+				regulator-min-microvolt = <810000>;
+				regulator-max-microvolt = <1160000>;
+				regulator-name = "vdd-cpu";
 			};
 
 			reg_dcdc3: dcdc3 {
-				regulator-name = "axp1530-dcdc3";
-				regulator-min-microvolt = <500000>;
-				regulator-max-microvolt = <1840000>;
-				regulator-step-delay-us = <25>;
-				regulator-final-delay-us = <50>;
 				regulator-always-on;
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+				regulator-name = "vdd-dram";
 			};
 
-			reg_aldo1: ldo1 {
-				regulator-name = "axp1530-aldo1";
+			reg_aldo1: aldo1 {
+				regulator-always-on;
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <1800000>;
-				regulator-step-delay-us = <25>;
-				regulator-final-delay-us = <50>;
-				regulator-always-on;
+				regulator-name = "vcc1v8";
 			};
 
-			reg_dldo1: ldo2 {
-				regulator-name = "axp1530-dldo1";
+			reg_dldo1: dldo1 {
+				regulator-always-on;
 				regulator-min-microvolt = <3300000>;
 				regulator-max-microvolt = <3300000>;
-				regulator-step-delay-us = <25>;
-				regulator-final-delay-us = <50>;
-				regulator-always-on;
+				regulator-name = "vcc3v3";
 			};
 		};
 	};
 };
 
 &spdif {
-	status = "okay";
+	//status = "okay";
 };
 
 &uart0 {
@@ -280,11 +305,30 @@
 	status = "okay";
 };
 
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pins>, <&uart1_rts_cts_pins>;
+	uart-has-rtscts;
+	//status = "okay";
+
+	bluetooth {
+		compatible = "brcm,bcm43438-bt";
+		clocks = <&rtc 1>;
+		clock-names = "lpo";
+		vbat-supply = <&reg_dldo1>;
+		vddio-supply = <&reg_dldo1>;
+		device-wakeup-gpios = <&r_pio 0 6 GPIO_ACTIVE_HIGH>; /* PL6 */
+		host-wakeup-gpios = <&r_pio 0 5 GPIO_ACTIVE_HIGH>; /* PL5 */
+		shutdown-gpios = <&r_pio 0 4 GPIO_ACTIVE_HIGH>; /* PL4 */
+	};
+};
+
 &usbotg {
-	dr_mode = "host";	/* USB A type receptable */
+	dr_mode = "peripheral";
 	status = "okay";
 };
 
 &usbphy {
+	usb1_vbus-supply = <&reg_usb1_vbus>;
 	status = "okay";
 };

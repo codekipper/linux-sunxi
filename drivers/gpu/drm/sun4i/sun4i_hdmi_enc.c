@@ -230,8 +230,9 @@ static int sun4i_hdmi_get_modes(struct drm_connector *connector)
 	if (!drm_edid)
 		return 0;
 
+	hdmi->hdmi_monitor = drm_detect_hdmi_monitor(edid);
 	DRM_DEBUG_DRIVER("Monitor is %s monitor\n",
-			 connector->display_info.is_hdmi ? "an HDMI" : "a DVI");
+			 hdmi->hdmi_monitor ? "an HDMI" : "a DVI");
 
 
 	ret = drm_edid_connector_add_modes(connector);

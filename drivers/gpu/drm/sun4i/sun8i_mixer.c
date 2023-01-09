@@ -703,7 +703,7 @@ static int sun8i_mixer_bind(struct device *dev, struct device *master,
 	}
 
 	sun8i_mixer_init(mixer);
-	
+
 	return 0;
 
 err_disable_bus_clk:

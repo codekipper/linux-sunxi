@@ -263,6 +263,7 @@ void sun8i_csc_set_ccsc_coefficients(struct sun8i_mixer *mixer, int layer,
 	else if (mixer->cfg->is_de33) {
 		sun8i_de33_ccsc_set_coefficients(mixer, layer,
 						mode, encoding, range);
+		return;
 	}
 
 	base = ccsc_base[mixer->cfg->ccsc][layer];

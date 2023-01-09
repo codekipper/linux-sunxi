@@ -516,6 +516,7 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&mmc0_pins>;
 			status = "disabled";
+			max-frequency = <150000000>;
 			cap-sd-highspeed;
 			cap-mmc-highspeed;
 			mmc-ddr-3_3v;
@@ -537,6 +538,7 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&mmc1_pins>;
 			status = "disabled";
+			max-frequency = <150000000>;
 			cap-sd-highspeed;
 			cap-mmc-highspeed;
 			mmc-ddr-3_3v;
@@ -558,6 +560,7 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&mmc2_pins>;
 			status = "disabled";
+			max-frequency = <150000000>;
 			cap-sd-highspeed;
 			cap-mmc-highspeed;
 			mmc-ddr-3_3v;
@@ -1170,7 +1173,8 @@
 		};
 
 		tcon_top: tcon-top@6510000 {
-			compatible = "allwinner,sun50i-h6-tcon-top";
+			compatible = "allwinner,sun50i-h616-tcon-top",
+				     "allwinner,sun50i-h6-tcon-top";
 			reg = <0x06510000 0x1000>;
 			clocks = <&ccu CLK_BUS_TCON_TOP>,
 				 <&ccu CLK_TCON_TV0>;
@@ -1266,7 +1270,8 @@
 		};
 
 		tcon_tv: lcd-controller@6515000 {
-			compatible = "allwinner,sun50i-h6-tcon-tv",
+			compatible = "allwinner,sun50i-h616-tcon-tv",
+				     "allwinner,sun50i-h6-tcon-tv",
 				     "allwinner,sun8i-r40-tcon-tv";
 			reg = <0x06515000 0x1000>;
 			interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
@@ -1335,7 +1340,8 @@
 			compatible = "allwinner,sun50i-h616-r-pinctrl";
 			reg = <0x07022000 0x400>;
 			interrupts = <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&r_ccu CLK_R_APB1>, <&osc24M>, <&rtc 0>;
+			clocks = <&r_ccu CLK_R_APB1>, <&osc24M>,
+				 <&rtc CLK_OSC32K>;
 			clock-names = "apb", "hosc", "losc";
 			gpio-controller;
 			#gpio-cells = <3>;

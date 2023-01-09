@@ -285,6 +285,7 @@ struct sun4i_hdmi {
 
 	struct sun4i_drv	*drv;
 
+	bool			hdmi_monitor;
 	struct cec_adapter	*cec_adap;
 
 	const struct sun4i_hdmi_variant	*variant;

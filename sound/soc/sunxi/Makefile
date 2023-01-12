@@ -12,6 +12,7 @@ obj-$(CONFIG_SND_SUN9I_HDMI_AUDIO) += sun9i-hdmi-audio.o
 obj-$(CONFIG_SND_SOC_SUN50I_AHUB) += sun50i-ahub.o
 obj-$(CONFIG_SND_SOC_SUN50I_AHUB) += sun50i-ahub-cpudai.o
 obj-$(CONFIG_SND_SOC_SUN50I_AHUB) += sun50i-ahub-daudio.o
+obj-$(CONFIG_SND_SOC_SUN50I_AHUB) += sun50i-i2s.o
 # ahub machine
 obj-$(CONFIG_SND_SOC_SUN50I_AHUB) += sun50i-sndahub.o
 obj-$(CONFIG_SND_SOC_SUN50I_HDMI) += sun50i-sndhdmi.o

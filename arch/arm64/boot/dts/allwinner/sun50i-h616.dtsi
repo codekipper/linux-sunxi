@@ -770,9 +770,11 @@
 			status = "disabled";
 		};
 
-		ahub_i2s1: ahub-i2s1@0x05097000 {
+		//ahub_i2s1: ahub-i2s1@0x05097000 {
+		ahub_i2s1: ahub-i2s1@0x05097300 {
 			#sound-dai-cells = <0>;
-			compatible = "allwinner,sunxi-ahub-daudio";
+			//compatible = "allwinner,sunxi-ahub-daudio";
+			compatible = "allwinner,sun50i-h616-audio-hub-i2s";
 			reg = <0x5097000 0xadf>;
 			clocks = <&ccu CLK_BUS_AUDIO_HUB>,
 				 <&ccu CLK_AUDIO_CODEC_1X>,

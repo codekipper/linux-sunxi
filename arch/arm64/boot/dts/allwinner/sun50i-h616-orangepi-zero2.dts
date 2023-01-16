@@ -375,32 +375,3 @@
 	usb1_vbus-supply = <&reg_usb1_vbus>;
 	status = "okay";
 };
-
-/* WIP - Audio Hub enabling */
-&ahub_codec {
-	status = "okay";
-};
-
-&ahub_cpudai0 {
-	status = "okay";
-};
-
-&ahub_cpudai1 {
-	status = "okay";
-};
-
-&ahub_cpudai2 {
-	status = "okay";
-};
-
-&sndahub {
-	status = "okay";
-};
-
-&ahub_i2s1 {
-	status = "okay";
-};
-
-&hdmi_audio {
-	status = "okay";
-};

@@ -316,8 +316,6 @@ static int sunxi_ahub_daudio_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 static int sunxi_ahub_daudio_init(
 		struct sunxi_ahub_daudio_priv *sunxi_ahub_daudio, int id)
 {
-	int ret;
-
  	sunxi_ahub_daudio_global_enable(sunxi_ahub_daudio, 1, id);
 
 	regmap_write(sunxi_ahub_daudio->regmap,
@@ -375,8 +373,6 @@ static int sunxi_ahub_daudio_hw_params(struct snd_pcm_substream *substream,
 {
 	struct sunxi_ahub_daudio_priv *sunxi_ahub_daudio =
 					snd_soc_dai_get_drvdata(dai);
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_card *card = rtd->card;		
 
 	/* default setting the daudio fmt */
 	sunxi_ahub_daudio_init_fmt(sunxi_ahub_daudio,
@@ -394,16 +390,10 @@ static int sunxi_ahub_daudio_hw_params(struct snd_pcm_substream *substream,
 		 * Not HDMI card, sunxi_hdmi maybe a NULL pointer.
 		 */
 		if (sunxi_ahub_daudio->tdm_num == SUNXI_AHUB_HDMI_ID) {
-			if (0)
-				regmap_update_bits(sunxi_ahub_daudio->regmap,
-					SUNXI_AHUB_I2S_FMT0(
-					sunxi_ahub_daudio->tdm_num),
-					(7<<I2S_FMT0_SR), (5<<I2S_FMT0_SR));
-			else
-				regmap_update_bits(sunxi_ahub_daudio->regmap,
-					SUNXI_AHUB_I2S_FMT0(
-					sunxi_ahub_daudio->tdm_num),
-					(7<<I2S_FMT0_SR), (3<<I2S_FMT0_SR));
+			regmap_update_bits(sunxi_ahub_daudio->regmap,
+				SUNXI_AHUB_I2S_FMT0(
+				sunxi_ahub_daudio->tdm_num),
+				(7<<I2S_FMT0_SR), (3<<I2S_FMT0_SR));
 		} else {
 			regmap_update_bits(sunxi_ahub_daudio->regmap,
 				SUNXI_AHUB_I2S_FMT0(sunxi_ahub_daudio->tdm_num),

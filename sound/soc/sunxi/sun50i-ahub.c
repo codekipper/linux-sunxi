@@ -594,29 +594,17 @@ static int sunxi_ahub_codec_dai_hw_params(struct snd_pcm_substream *substream,
 		struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
 {
 	struct sunxi_ahub_priv *sunxi_ahub = snd_soc_dai_get_drvdata(dai);
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_card *card = rtd->card;
 
 	switch (params_format(params)) {
 	case	SNDRV_PCM_FORMAT_S16_LE:
 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 			/* special handle for HDMI rawdata mode */
-			//if (sunxi_hdmi->hdmi_format > 1) {
-			if (0) {
-				regmap_update_bits(sunxi_ahub->regmap,
-					SUNXI_AHUB_APBIF_TX_CTL(dai->id),
-					(7<<APBIF_TX_WS), (7<<APBIF_TX_WS));
-				regmap_update_bits(sunxi_ahub->regmap,
-					SUNXI_AHUB_APBIF_TXFIFO_CTL(dai->id),
-					(1<<APBIF_TX_TXIM), (0<<APBIF_TX_TXIM));
-			} else {
-				regmap_update_bits(sunxi_ahub->regmap,
-					SUNXI_AHUB_APBIF_TX_CTL(dai->id),
-					(7<<APBIF_TX_WS), (3<<APBIF_TX_WS));
-				regmap_update_bits(sunxi_ahub->regmap,
-					SUNXI_AHUB_APBIF_TXFIFO_CTL(dai->id),
-					(1<<APBIF_TX_TXIM), (1<<APBIF_TX_TXIM));
-			}
+			regmap_update_bits(sunxi_ahub->regmap,
+				SUNXI_AHUB_APBIF_TX_CTL(dai->id),
+				(7<<APBIF_TX_WS), (3<<APBIF_TX_WS));
+			regmap_update_bits(sunxi_ahub->regmap,
+				SUNXI_AHUB_APBIF_TXFIFO_CTL(dai->id),
+				(1<<APBIF_TX_TXIM), (1<<APBIF_TX_TXIM));
 		} else {
 			regmap_update_bits(sunxi_ahub->regmap,
 					SUNXI_AHUB_APBIF_RX_CTL(dai->id),

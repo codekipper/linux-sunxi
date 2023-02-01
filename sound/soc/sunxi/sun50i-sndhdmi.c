@@ -102,7 +102,6 @@ static int sunxi_sound_probe(struct platform_device *pdev)
 	struct snd_soc_dai_link *dai_link;
 	struct snd_soc_card *card;
 	char name[30] = "allwinner-hdmi";
-	unsigned int temp_val;
 	int ret = 0;
 
 	card = devm_kzalloc(&pdev->dev, sizeof(struct snd_soc_card),

@@ -541,7 +541,7 @@ static int sunxi_ahub_daudio_hw_params(struct snd_pcm_substream *substream,
 			((params_channels(params)-1)<<I2S_IN_SLOT_NUM));
 	}
 
-	return 0;
+	return sunxi_ahub_daudio_set_clkdiv(dai, 0, 2048); // hack to set bclk div
 }
 
 static int sunxi_ahub_daudio_set_sysclk(struct snd_soc_dai *dai,

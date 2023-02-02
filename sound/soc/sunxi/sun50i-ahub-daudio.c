@@ -567,7 +567,7 @@ static int sunxi_ahub_daudio_set_clkdiv(struct snd_soc_dai *dai,
 
 	if (sunxi_ahub_daudio->tdm_config)
 		/* I2S/TDM two channel mode */
-		div_ratio = clk_div / (sunxi_ahub_daudio->pcm_lrck_period * 2);
+		div_ratio = clk_div / (sunxi_ahub_daudio->pcm_lrck_period * 4);
 	else
 		/* PCM mode */
 		div_ratio = clk_div / sunxi_ahub_daudio->pcm_lrck_period;

@@ -583,7 +583,7 @@ static int sunxi_ahub_daudio_set_clkdiv(struct snd_soc_dai *dai,
 	printk("%s COOPS I2S%d tdm_config %d clk_div %d period %d\n", __func__, sunxi_ahub_daudio->tdm_num, sunxi_ahub_daudio->tdm_config , clk_div, sunxi_ahub_daudio->pcm_lrck_period);
 	if (sunxi_ahub_daudio->tdm_config)
 		/* I2S/TDM two channel mode */
-		div_ratio = clk_div / (sunxi_ahub_daudio->pcm_lrck_period * 2);
+		div_ratio = clk_div / (sunxi_ahub_daudio->pcm_lrck_period * 4);
 	else
 		/* PCM mode */
 		div_ratio = clk_div / sunxi_ahub_daudio->pcm_lrck_period;

@@ -96,13 +96,14 @@ no_karaook_handle:
 				(1<<I2S1_GAT), (1<<I2S1_GAT));
 		sunxi_ahub_update_bits(SUNXI_AHUB_I2S_CTL(1),
 				(1<<I2S_CTL_TXEN), (1<<I2S_CTL_TXEN));
-
+#if 0
 		sunxi_ahub_update_bits(SUNXI_AHUB_RST,
 				(1<<I2S0_RST), (1<<I2S0_RST));
 		sunxi_ahub_update_bits(SUNXI_AHUB_GAT,
 				(1<<I2S0_GAT), (1<<I2S0_GAT));
 		sunxi_ahub_update_bits(SUNXI_AHUB_I2S_CTL(0),
 				(1<<I2S_CTL_TXEN), (1<<I2S_CTL_TXEN));
+#endif
 		break;
 	case 1:
 		/* operation CVBS module */
@@ -280,6 +281,32 @@ static int sunxi_ahub_i2s_capture_route_disable(
 	return 0;
 }
 
+static int sunxi_ahub_cpudai_hw_params(struct snd_pcm_substream *substream,
+				       struct snd_pcm_hw_params *params,
+				       struct snd_soc_dai *dai)
+{
+	struct sunxi_ahub_cpudai_priv *sunxi_ahub_cpudai =
+					snd_soc_dai_get_drvdata(dai);
+
+	switch (params_physical_width(params)) {
+	case 16:
+		sunxi_ahub_cpudai->playback_dma_param.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+		sunxi_ahub_cpudai->capture_dma_param.addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
+		break;
+	case 24:
+	case 32:
+		sunxi_ahub_cpudai->playback_dma_param.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
+		sunxi_ahub_cpudai->capture_dma_param.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
+		break;
+	default:
+		dev_err(dai->dev, "Unsupported physical sample width: %d\n",
+			params_physical_width(params));
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static int sunxi_ahub_cpudai_startup(struct snd_pcm_substream *substream,
 				struct snd_soc_dai *dai)
 {
@@ -365,6 +392,7 @@ static int sunxi_ahub_cpudai_trigger(struct snd_pcm_substream *substream,
 }
 
 static struct snd_soc_dai_ops sunxi_ahub_cpudai_dai_ops = {
+	.hw_params = sunxi_ahub_cpudai_hw_params,
 	.startup = sunxi_ahub_cpudai_startup,
 	.trigger = sunxi_ahub_cpudai_trigger,
 };
@@ -452,12 +480,10 @@ static int  sunxi_ahub_cpudai_dev_probe(struct platform_device *pdev)
 	sunxi_ahub_cpudai->playback_dma_param.addr =
 		res.start + SUNXI_AHUB_APBIF_TXFIFO(sunxi_ahub_cpudai->id);
 	sunxi_ahub_cpudai->playback_dma_param.maxburst = 8;
-	sunxi_ahub_cpudai->playback_dma_param.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 
 	sunxi_ahub_cpudai->capture_dma_param.addr =
 		res.start + SUNXI_AHUB_APBIF_RXFIFO(sunxi_ahub_cpudai->id);
 	sunxi_ahub_cpudai->capture_dma_param.maxburst = 8;
-	sunxi_ahub_cpudai->capture_dma_param.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 
 	sunxi_ahub_cpudai->regmap = sunxi_ahub_regmap_init(pdev);
 	if (!sunxi_ahub_cpudai->regmap) {

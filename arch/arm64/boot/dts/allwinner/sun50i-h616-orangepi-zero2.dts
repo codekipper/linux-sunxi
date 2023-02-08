@@ -15,6 +15,50 @@
 	model = "OrangePi Zero2";
 	compatible = "xunlong,orangepi-zero2", "allwinner,sun50i-h616";
 
+	ahub@5097000 {
+		status = "okay";
+
+		apbif@5097010 {
+			status = "okay";
+		};
+
+		i2s@5097300 {
+			status = "okay";
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				port@0 {
+					reg = <0>;
+
+					i2s1_cif_ep: endpoint {
+						remote-endpoint = <&ahub_i2s1_ep>;
+					};
+				};
+
+				i2s1_port: port@1 {
+					reg = <1>;
+
+					i2s1_dap_ep: endpoint {
+						dai-format = "i2s";
+						/* Placeholder for external Codec */
+					};
+				};
+			};
+		};
+
+		ports {
+			ahub_i2s1_port: port@b {
+				reg = <0xb>;
+
+				ahub_i2s1_ep: endpoint {
+					remote-endpoint = <&i2s1_cif_ep>;
+				};
+			};
+		};
+	};
+
 	aliases {
 		ethernet0 = &emac0;
 		serial0 = &uart0;
@@ -80,6 +124,19 @@
 		gpio = <&pio 6 18 GPIO_ACTIVE_HIGH>; /* PG18 WL_REG_ON */
 		regulator-always-on;
 		enable-active-high;
+	};
+
+	sound-ahub {
+		compatible = "allwinner,sun50i-audio-graph-card";
+		status = "okay";
+
+		dais = /* FE */
+		       <&apbif0_port>,
+		       /* Router */
+		       <&ahub_i2s1_port>,
+		       /* I/O DAP Ports */
+		       <&i2s1_port>;
+		label = "Allwinner SUN50I Audio Hub";
 	};
 
 	sound-spdif {

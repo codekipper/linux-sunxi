@@ -62,7 +62,7 @@ struct sun50i_audio_hub_quirks {
 	const struct regmap_config		*sun50i_audio_hub_regmap;
 	const struct snd_soc_component_driver	*components;
 	struct snd_soc_dai_driver		*dais;
-	int					*num_dais;
+	unsigned int				*num_dais;
 };
 
 struct sun50i_audio_hub {
@@ -75,6 +75,7 @@ struct sun50i_audio_hub {
 	const struct sun50i_audio_hub_quirks	*variant;
 };
 
+#if 0
 /* FE */
 SND_SOC_DAILINK_DEFS(playback1,
 		     DAILINK_COMP_ARRAY(COMP_CPU("DL1")),
@@ -107,7 +108,6 @@ SND_SOC_DAILINK_DEFS(capture3,
 		     DAILINK_COMP_ARRAY(COMP_EMPTY()));
 
 /* BE */
-#if 0
 SND_SOC_DAILINK_DEFS(primary_codec,
 		     DAILINK_COMP_ARRAY(COMP_CPU("DAM0")),
 		     DAILINK_COMP_ARRAY(COMP_DUMMY()),
@@ -117,7 +117,6 @@ SND_SOC_DAILINK_DEFS(secondary_codec,
 		     DAILINK_COMP_ARRAY(COMP_CPU("DAM1")),
 		     DAILINK_COMP_ARRAY(COMP_DUMMY()),
 		     DAILINK_COMP_ARRAY(COMP_EMPTY()));
-#endif
 SND_SOC_DAILINK_DEFS(i2s0,
 		     DAILINK_COMP_ARRAY(COMP_CPU("I2S0")),
 		     DAILINK_COMP_ARRAY(COMP_DUMMY()),
@@ -137,6 +136,7 @@ SND_SOC_DAILINK_DEFS(i2s3,
 		     DAILINK_COMP_ARRAY(COMP_CPU("I2S3")),
 		     DAILINK_COMP_ARRAY(COMP_DUMMY()),
 		     DAILINK_COMP_ARRAY(COMP_EMPTY()));
+#endif
 
 #define DAI(sname)							\
 	{								\
@@ -189,14 +189,14 @@ static const char * const sun50i_ahub_mux_texts[] = {
 static const unsigned int sun50i_ahub_mux_values[] = {
 	0,
 	/* APDIF */
-	MUX_VALUE(0, 0),
-	MUX_VALUE(0, 1),
-	MUX_VALUE(0, 2),
+	MUX_VALUE(0, 31),
+	MUX_VALUE(0, 30),
+	MUX_VALUE(0, 29),
 	/* I2S */
-	MUX_VALUE(0, 16),
-	MUX_VALUE(0, 17),
-	MUX_VALUE(0, 18),
-	MUX_VALUE(0, 19),
+	MUX_VALUE(0, 23),
+	MUX_VALUE(0, 22),
+	MUX_VALUE(0, 21),
+	MUX_VALUE(0, 20),
 };
 
 static int sun50i_ahub_get_value_enum(struct snd_kcontrol *kctl,
@@ -371,7 +371,7 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Can't get our audio_hub clock\n");
 		return PTR_ERR(audio_hub->audio_hub_clk);
 	}
-#if 0
+
         ret = devm_snd_soc_register_component(&pdev->dev,
 					      audio_hub->variant->components,
 					      audio_hub->variant->dais,
@@ -380,7 +380,7 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "can't register AUDIO HUB component, err: %d\n", ret);
 		return ret;
 	}
-#endif
+
 	return 0;
 }
 

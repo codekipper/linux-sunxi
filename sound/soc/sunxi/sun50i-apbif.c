@@ -104,7 +104,27 @@ struct sun50i_apbif {
 	struct snd_dmaengine_dai_dma_data 	*capture_dma_data;
 	const struct sun50i_apbif_quirks	*variant;
 };
+
+#define SUN50I_AHUB_APBIF_CHANNEL_COUNT			3
+
+#define REG_DEFAULTS(id)		       \
+	{ SUN50I_AHUB_APBIF_TX_CTL(id), 0x00000100 },		\
+	{ SUN50I_AHUB_APBIF_TX_IRQ_STA(id), 0x00000001 },	\
+	{ SUN50I_AHUB_APBIF_TXFIFO_CTL(id), 0x00000200 },	\
+	{ SUN50I_AHUB_APBIF_TXFIFO_STA(id), 0x00000140 },	\
+	{ SUN50I_AHUB_APBIF_RX_CTL(id), 0x00000100 },		\
+	{ SUN50I_AHUB_APBIF_RX_IRQ_STA(id), 0x00000001 },	\
+	{ SUN50I_AHUB_APBIF_RXFIFO_CTL(id), 0x00000400 },	\
+	{ SUN50I_AHUB_APBIF_RXFIFO_STA(id), 0x00000140 }
+
+
+#define APBIF_REG_DEFAULTS(id)					\
+	REG_DEFAULTS((id) - 1)
+
 static const struct reg_default sun50i_apbif_reg_defaults[] = {
+	APBIF_REG_DEFAULTS(1),
+	APBIF_REG_DEFAULTS(2),
+	APBIF_REG_DEFAULTS(3),
 };
 
 static bool sun50i_apbif_wr_reg(struct device *dev, unsigned int reg)

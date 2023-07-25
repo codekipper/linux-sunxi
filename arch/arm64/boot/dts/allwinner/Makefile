@@ -43,3 +43,4 @@ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h616-x96-mate.dtb
 dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h616-tanix-tx6s.dtb
 dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h616-tanix-tx6s-axp313.dtb
 dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h313-x96-q.dtb
+dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h313-x96-q-lpddr3.dtb

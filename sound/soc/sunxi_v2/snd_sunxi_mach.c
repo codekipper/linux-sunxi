@@ -25,16 +25,16 @@
 
 #define DRV_NAME	"sunxi-snd-mach"
 
-static void asoc_simple_shutdown(struct snd_pcm_substream *substream)
+static void sunxi_simple_shutdown(struct snd_pcm_substream *substream)
 {
 }
 
-static int asoc_simple_startup(struct snd_pcm_substream *substream)
+static int sunxi_simple_startup(struct snd_pcm_substream *substream)
 {
 	return 0;
 }
 
-static int asoc_simple_hw_params(struct snd_pcm_substream *substream,
+static int sunxi_simple_hw_params(struct snd_pcm_substream *substream,
 				 struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
@@ -42,10 +42,10 @@ static int asoc_simple_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
 	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
 
-	struct asoc_simple_priv *priv = snd_soc_card_get_drvdata(rtd->card);
+	struct sunxi_simple_priv *priv = snd_soc_card_get_drvdata(rtd->card);
 	struct snd_soc_dai_link *dai_link = simple_priv_to_link(priv, rtd->num);
 	struct simple_dai_props *dai_props = simple_priv_to_props(priv, rtd->num);
-	struct asoc_simple_dai *dais = priv->dais;
+	struct sunxi_simple_dai *dais = priv->dais;
 	unsigned int mclk;
 	unsigned int cpu_pll_clk, codec_pll_clk;
 	unsigned int cpu_bclk_ratio, codec_bclk_ratio;
@@ -199,12 +199,12 @@ static int asoc_simple_hw_params(struct snd_pcm_substream *substream,
 }
 
 static struct snd_soc_ops simple_ops = {
-	.startup = asoc_simple_startup,
-	.shutdown = asoc_simple_shutdown,
-	.hw_params = asoc_simple_hw_params,
+	.startup = sunxi_simple_startup,
+	.shutdown = sunxi_simple_shutdown,
+	.hw_params = sunxi_simple_hw_params,
 };
 
-static int asoc_simple_dai_init(struct snd_soc_pcm_runtime *rtd)
+static int sunxi_simple_dai_init(struct snd_soc_pcm_runtime *rtd)
 {
 	int i;
 	struct snd_soc_card *card = rtd->card;
@@ -227,7 +227,7 @@ static int asoc_simple_dai_init(struct snd_soc_pcm_runtime *rtd)
 }
 
 static int simple_dai_link_of(struct device_node *node,
-			      struct asoc_simple_priv *priv)
+			      struct sunxi_simple_priv *priv)
 {
 	struct device *dev = simple_priv_to_dev(priv);
 	struct snd_soc_dai_link *dai_link = simple_priv_to_link(priv, 0);
@@ -261,7 +261,7 @@ static int simple_dai_link_of(struct device_node *node,
 		goto dai_link_of_err;
 	}
 
-	ret = asoc_simple_parse_daifmt(top_np, codec, prefix, &dai_link->dai_fmt);
+	ret = sunxi_simple_parse_daifmt(top_np, codec, prefix, &dai_link->dai_fmt);
 	if (ret < 0)
 		goto dai_link_of_err;
 	/* sunxi: parse stream direction
@@ -274,7 +274,7 @@ static int simple_dai_link_of(struct device_node *node,
 	 *	PREFIXcapture-only;
 	 * }
 	 */
-	ret = asoc_simple_parse_daistream(top_np, prefix, dai_link);
+	ret = sunxi_simple_parse_daistream(top_np, prefix, dai_link);
 	if (ret < 0)
 		goto dai_link_of_err;
 	/* sunxi: parse slot-num & slot-width
@@ -284,14 +284,14 @@ static int simple_dai_link_of(struct device_node *node,
 	 *	PREFIXplayslot-width	= <x>;
 	 * }
 	 */
-	ret = asoc_simple_parse_tdm_slot(top_np, prefix, priv->dais);
+	ret = sunxi_simple_parse_tdm_slot(top_np, prefix, priv->dais);
 	if (ret < 0)
 		goto dai_link_of_err;
 
-	ret = asoc_simple_parse_cpu(cpu, dai_link, DAI, CELL, &single_cpu);
+	ret = sunxi_simple_parse_cpu(cpu, dai_link, DAI, CELL, &single_cpu);
 	if (ret < 0)
 		goto dai_link_of_err;
-	ret = asoc_simple_parse_codec(codec, dai_link, DAI, CELL);
+	ret = sunxi_simple_parse_codec(codec, dai_link, DAI, CELL);
 	if (ret < 0) {
 		if (ret == -EPROBE_DEFER)
 			goto dai_link_of_err;
@@ -301,7 +301,7 @@ static int simple_dai_link_of(struct device_node *node,
 		/* dai_link->codecs->dai_name = "sunxi-dummy-codec-dai"; */
 		SND_LOG_DEBUG(HLOG, "use dummy codec for simple card.\n");
 	}
-	ret = asoc_simple_parse_platform(plat, dai_link, DAI, CELL);
+	ret = sunxi_simple_parse_platform(plat, dai_link, DAI, CELL);
 	if (ret < 0)
 		goto dai_link_of_err;
 
@@ -314,11 +314,11 @@ static int simple_dai_link_of(struct device_node *node,
 	 *	}
 	 * }
 	 */
-	ret = asoc_simple_parse_tdm_clk(cpu, codec, prefix, dai_props);
+	ret = sunxi_simple_parse_tdm_clk(cpu, codec, prefix, dai_props);
 	if (ret < 0)
 		goto dai_link_of_err;
 
-	ret = asoc_simple_set_dailink_name(dev, dai_link,
+	ret = sunxi_simple_set_dailink_name(dev, dai_link,
 					   "%s-%s",
 					   dai_link->cpus->dai_name,
 					   dai_link->codecs->dai_name);
@@ -326,15 +326,15 @@ static int simple_dai_link_of(struct device_node *node,
 		goto dai_link_of_err;
 
 	dai_link->ops = &simple_ops;
-	dai_link->init = asoc_simple_dai_init;
+	dai_link->init = sunxi_simple_dai_init;
 
 	SND_LOG_DEBUG(HLOG, "name   : %s\n", dai_link->stream_name);
 	SND_LOG_DEBUG(HLOG, "format : %x\n", dai_link->dai_fmt);
 	SND_LOG_DEBUG(HLOG, "cpu    : %s\n", dai_link->cpus->name);
 	SND_LOG_DEBUG(HLOG, "codec  : %s\n", dai_link->codecs->name);
 
-	asoc_simple_canonicalize_cpu(dai_link, single_cpu);
-	asoc_simple_canonicalize_platform(dai_link);
+	sunxi_simple_canonicalize_cpu(dai_link, single_cpu);
+	sunxi_simple_canonicalize_platform(dai_link);
 
 dai_link_of_err:
 	of_node_put(cpu);
@@ -344,7 +344,7 @@ dai_link_of_err:
 	return ret;
 }
 
-static int simple_parse_of(struct asoc_simple_priv *priv)
+static int simple_parse_of(struct sunxi_simple_priv *priv)
 {
 	int ret;
 	struct device *dev = simple_priv_to_dev(priv);
@@ -357,17 +357,17 @@ static int simple_parse_of(struct asoc_simple_priv *priv)
 		return -EINVAL;
 
 	/* DAPM widgets */
-	ret = asoc_simple_parse_widgets(card, PREFIX);
+	ret = sunxi_simple_parse_widgets(card, PREFIX);
 	if (ret < 0)
 		return ret;
 
 	/* DAPM routes */
-	ret = asoc_simple_parse_routing(card, PREFIX);
+	ret = sunxi_simple_parse_routing(card, PREFIX);
 	if (ret < 0)
 		return ret;
 
 	/* DAPM pin_switches */
-	ret = asoc_simple_parse_pin_switches(card, PREFIX);
+	ret = sunxi_simple_parse_pin_switches(card, PREFIX);
 	if (ret < 0)
 		return ret;
 
@@ -376,7 +376,7 @@ static int simple_parse_of(struct asoc_simple_priv *priv)
 	if (ret < 0)
 		return ret;
 
-	ret = asoc_simple_parse_card_name(card, PREFIX);
+	ret = sunxi_simple_parse_card_name(card, PREFIX);
 	return ret;
 }
 
@@ -385,11 +385,11 @@ static int simple_soc_probe(struct snd_soc_card *card)
 	return 0;
 }
 
-static int asoc_simple_probe(struct platform_device *pdev)
+static int sunxi_simple_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct device_node *top_np = dev->of_node;
-	struct asoc_simple_priv *priv;
+	struct sunxi_simple_priv *priv;
 	struct snd_soc_card *card;
 	int ret;
 
@@ -403,7 +403,7 @@ static int asoc_simple_probe(struct platform_device *pdev)
 	card->dev		= dev;
 	card->probe		= simple_soc_probe;
 
-	ret = asoc_simple_init_priv(priv);
+	ret = sunxi_simple_init_priv(priv);
 	if (ret < 0)
 		return ret;
 
@@ -420,21 +420,21 @@ static int asoc_simple_probe(struct platform_device *pdev)
 
 	snd_soc_card_set_drvdata(card, priv);
 
-	/* asoc_simple_debug_info(priv); */
+	/* sunxi_simple_debug_info(priv); */
 	ret = devm_snd_soc_register_card(dev, card);
 	if (ret >= 0)
 		return ret;
 err:
-	asoc_simple_clean_reference(card);
+	sunxi_simple_clean_reference(card);
 
 	return ret;
 }
 
-static int asoc_simple_remove(struct platform_device *pdev)
+static int sunxi_simple_remove(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
 
-	return asoc_simple_clean_reference(card);
+	return sunxi_simple_clean_reference(card);
 }
 
 static const struct of_device_id snd_soc_sunxi_of_match[] = {
@@ -449,8 +449,8 @@ static struct platform_driver sunxi_soundcard_machine_driver = {
 		.pm		= &snd_soc_pm_ops,
 		.of_match_table	= snd_soc_sunxi_of_match,
 	},
-	.probe	= asoc_simple_probe,
-	.remove	= asoc_simple_remove,
+	.probe	= sunxi_simple_probe,
+	.remove	= sunxi_simple_remove,
 };
 
 int __init sunxi_soundcard_machine_dev_init(void)

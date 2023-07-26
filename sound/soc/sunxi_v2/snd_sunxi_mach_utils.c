@@ -21,7 +21,7 @@
 
 #define HLOG		"mach_utils"
 
-int asoc_simple_clean_reference(struct snd_soc_card *card)
+int sunxi_simple_clean_reference(struct snd_soc_card *card)
 {
 	struct snd_soc_dai_link *dai_link;
 	int i;
@@ -33,13 +33,13 @@ int asoc_simple_clean_reference(struct snd_soc_card *card)
 	return 0;
 }
 
-int asoc_simple_init_priv(struct asoc_simple_priv *priv)
+int sunxi_simple_init_priv(struct sunxi_simple_priv *priv)
 {
 	struct snd_soc_card *card = simple_priv_to_card(priv);
 	struct device *dev = simple_priv_to_dev(priv);
 	struct snd_soc_dai_link *dai_link;
 	struct simple_dai_props *dai_props;
-	struct asoc_simple_dai *dais;
+	struct sunxi_simple_dai *dais;
 	struct snd_soc_codec_conf *cconf = NULL;
 
 	dai_props = devm_kcalloc(dev, 1, sizeof(*dai_props), GFP_KERNEL);
@@ -64,7 +64,7 @@ int asoc_simple_init_priv(struct asoc_simple_priv *priv)
 	 *
 	 * "platform" might be removed
 	 * see
-	 *	simple-card-utils.c :: asoc_simple_canonicalize_platform()
+	 *	simple-card-utils.c :: sunxi_simple_canonicalize_platform()
 	 */
 	dai_link->cpus		= &dai_props->cpus;
 	dai_link->num_cpus	= 1;
@@ -86,7 +86,7 @@ int asoc_simple_init_priv(struct asoc_simple_priv *priv)
 	return 0;
 }
 
-int asoc_simple_parse_widgets(struct snd_soc_card *card, char *prefix)
+int sunxi_simple_parse_widgets(struct snd_soc_card *card, char *prefix)
 {
 	struct device_node *node = card->dev->of_node;
 	char prop[128];
@@ -103,7 +103,7 @@ int asoc_simple_parse_widgets(struct snd_soc_card *card, char *prefix)
 	return 0;
 }
 
-int asoc_simple_parse_routing(struct snd_soc_card *card, char *prefix)
+int sunxi_simple_parse_routing(struct snd_soc_card *card, char *prefix)
 {
 	struct device_node *node = card->dev->of_node;
 	char prop[128];
@@ -119,7 +119,7 @@ int asoc_simple_parse_routing(struct snd_soc_card *card, char *prefix)
 	return snd_soc_of_parse_audio_routing(card, prop);
 }
 
-int asoc_simple_parse_pin_switches(struct snd_soc_card *card, char *prefix)
+int sunxi_simple_parse_pin_switches(struct snd_soc_card *card, char *prefix)
 {
 	const unsigned int nb_controls_max = 16;
 	const char **strings, *control_name;
@@ -174,7 +174,7 @@ int asoc_simple_parse_pin_switches(struct snd_soc_card *card, char *prefix)
 	return 0;
 }
 
-int asoc_simple_parse_daifmt(struct device_node *node,
+int sunxi_simple_parse_daifmt(struct device_node *node,
 			     struct device_node *codec,
 			     char *prefix,
 			     unsigned int *retfmt)
@@ -208,7 +208,7 @@ int asoc_simple_parse_daifmt(struct device_node *node,
 	return 0;
 }
 
-int asoc_simple_parse_daistream(struct device_node *node, char *prefix,
+int sunxi_simple_parse_daistream(struct device_node *node, char *prefix,
 				struct snd_soc_dai_link *dai_link)
 {
 	char prop[128];
@@ -229,8 +229,8 @@ int asoc_simple_parse_daistream(struct device_node *node, char *prefix,
 	return 0;
 }
 
-int asoc_simple_parse_tdm_slot(struct device_node *node, char *prefix,
-			       struct asoc_simple_dai *dais)
+int sunxi_simple_parse_tdm_slot(struct device_node *node, char *prefix,
+			       struct sunxi_simple_dai *dais)
 {
 	int ret;
 	char prop[128];
@@ -252,7 +252,7 @@ int asoc_simple_parse_tdm_slot(struct device_node *node, char *prefix,
 	return 0;
 }
 
-int asoc_simple_parse_tdm_clk(struct device_node *cpu,
+int sunxi_simple_parse_tdm_clk(struct device_node *cpu,
 			      struct device_node *codec,
 			      char *prefix,
 			      struct simple_dai_props *dai_props)
@@ -290,7 +290,7 @@ int asoc_simple_parse_tdm_clk(struct device_node *cpu,
 	return 0;
 }
 
-int asoc_simple_parse_card_name(struct snd_soc_card *card,
+int sunxi_simple_parse_card_name(struct snd_soc_card *card,
 				char *prefix)
 {
 	int ret;
@@ -315,7 +315,7 @@ int asoc_simple_parse_card_name(struct snd_soc_card *card,
 	return 0;
 }
 
-int asoc_simple_parse_dai(struct device_node *node,
+int sunxi_simple_parse_dai(struct device_node *node,
 			  struct snd_soc_dai_link_component *dlc,
 			  const char *list_name, const char *cells_name,
 			  int *is_single_link)
@@ -365,7 +365,7 @@ int asoc_simple_parse_dai(struct device_node *node,
 	return 0;
 }
 
-int asoc_simple_set_dailink_name(struct device *dev,
+int sunxi_simple_set_dailink_name(struct device *dev,
 				 struct snd_soc_dai_link *dai_link,
 				 const char *fmt, ...)
 {
@@ -387,7 +387,7 @@ int asoc_simple_set_dailink_name(struct device *dev,
 	return ret;
 }
 
-void asoc_simple_canonicalize_platform(struct snd_soc_dai_link *dai_link)
+void sunxi_simple_canonicalize_platform(struct snd_soc_dai_link *dai_link)
 {
 	/* Assumes platform == cpu */
 	if (!dai_link->platforms->of_node)
@@ -401,7 +401,7 @@ void asoc_simple_canonicalize_platform(struct snd_soc_dai_link *dai_link)
 		dai_link->num_platforms = 0;
 }
 
-void asoc_simple_canonicalize_cpu(struct snd_soc_dai_link *dai_link,
+void sunxi_simple_canonicalize_cpu(struct snd_soc_dai_link *dai_link,
 				  int is_single_links)
 {
 	/*

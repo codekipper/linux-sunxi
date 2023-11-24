@@ -270,6 +270,16 @@
 				function = "i2c0";
 			};
 
+			i2c1_pins: i2c1-pins {
+				pins = "PH0", "PH1";
+				function = "i2c1";
+			};
+
+			i2c2_pins: i2c2-pins {
+				pins = "PH2", "PH3";
+				function = "i2c2";
+			};
+
 			/omit-if-no-ref/
 			i2c3_pa_pins: i2c3-pa-pins {
 				pins = "PA10", "PA11";

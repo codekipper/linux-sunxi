@@ -15,10 +15,35 @@
 
 	aliases {
 		serial0 = &uart0;
+		ethernet0 = &emac1;
+		ethernet1 = &wlan;
 	};
 
 	chosen {
 		stdout-path = "serial0:115200n8";
+	};
+
+	connector {
+		compatible = "hdmi-connector";
+		type = "d";
+
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
+			};
+		};
+	};
+
+	openvfd {
+		compatible = "open,vfd";
+		dev_name = "openvfd";
+		openvfd_gpio_clk = <&pio 8 11 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+		openvfd_gpio_dat = <&pio 8 12 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+		vfd_gpio_chip_name = "0300b000.pinctrl";
+		openvfd_chars = [02 04 03 02 01];
+		openvfd_dot_bits = [00 01 03 02 04 05 06];
+		openvfd_display_type = <0x03000001>;
+		status = "okay";
 	};
 
 	reg_vcc5v: vcc5v {
@@ -29,6 +54,49 @@
 		regulator-max-microvolt = <5000000>;
 		regulator-always-on;
 	};
+
+	reg_vcc_wifi: reg_vcc_wifi {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc-wifi";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&pio 6 18 GPIO_ACTIVE_HIGH>; /* PG18 WL_REG_ON */
+		regulator-always-on;
+		enable-active-high;
+		status = "okay";
+	};
+
+	sound-spdif {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "sun50i-h6-spdif";
+
+		simple-audio-card,cpu {
+			sound-dai = <&spdif>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&spdif_out>;
+		};
+	};
+
+	spdif_out: spdif-out {
+		#sound-dai-cells = <0>;
+		compatible = "linux,spdif-dit";
+	};
+
+	wifi_pwrseq: wifi_pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		post-power-on-delay-ms = <200>;
+	};
+};
+
+&codec {
+	allwinner,audio-routing = "Line Out", "LINEOUT";
+	status = "okay";
+};
+
+&de {
+	status = "okay";
 };
 
 &ehci0 {
@@ -39,8 +107,37 @@
 	status = "okay";
 };
 
+&emac1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&rmii_pins>;
+	phy-mode = "rmii";
+	phy-handle = <&rmii_phy>;
+	phy-supply = <&reg_aldo1>;
+	allwinner,rx-delay-ps = <3100>;
+	allwinner,tx-delay-ps = <700>;
+	status = "okay";
+};
+
+&hdmi {
+	hvcc-supply = <&reg_aldo1>;
+	status = "okay";
+};
+
+&hdmi_out {
+	hdmi_out_con: endpoint {
+		remote-endpoint = <&hdmi_con_in>;
+	};
+};
+
 &ir {
 	status = "okay";
+};
+
+&mdio1 {
+	rmii_phy: ethernet-phy@1 {
+		compatible = "ethernet-phy-ieee802.3-c22";
+		reg = <1>;
+	};
 };
 
 &mmc0 {
@@ -48,6 +145,25 @@
 	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;	/* PF6 */
 	bus-width = <4>;
 	status = "okay";
+};
+
+&mmc1 {
+	vmmc-supply = <&reg_dldo1>;
+	vqmmc-supply = <&reg_vcc_wifi>;
+	mmc-pwrseq = <&wifi_pwrseq>;
+	bus-width = <4>;
+	non-removable;
+	status = "okay";
+
+	wlan: wifi@1 {
+		reg = <1>;
+		compatible = "xradio,xr819",
+			     "brcm,bcm4329-fmac";
+		interrupt-parent = <&pio>;
+		interrupts = <6 15 IRQ_TYPE_EDGE_RISING>; /* PG15 WL_HOSTWAKE*/
+		interrupt-names = "host-wake";
+		local-mac-address = [dc 44 6d c0 ff 03];
+	};
 };
 
 &mmc2 {
@@ -85,8 +201,6 @@
 		reg = <0x36>;
 		#interrupt-cells = <1>;
 		interrupt-controller;
-		interrupt-parent = <&pio>;
-		interrupts = <2 9 IRQ_TYPE_LEVEL_LOW>;	/* PC9 */
 
 		vin1-supply = <&reg_vcc5v>;
 		vin2-supply = <&reg_vcc5v>;
@@ -131,6 +245,10 @@
 			};
 		};
 	};
+};
+
+&spdif {
+	status = "okay";
 };
 
 &uart0 {

@@ -873,6 +873,7 @@ static int sun50i_i2s_probe(struct platform_device *pdev)
 	void __iomem *regs;
 	int irq, ret;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	i2s = devm_kzalloc(&pdev->dev, sizeof(*i2s), GFP_KERNEL);
 	if (!i2s)
 		return -ENOMEM;
@@ -934,6 +935,7 @@ static int sun50i_i2s_probe(struct platform_device *pdev)
 		}
 	}
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	pm_runtime_enable(&pdev->dev);
 	if (!pm_runtime_enabled(&pdev->dev)) {
 		ret = sun50i_i2s_runtime_resume(&pdev->dev);
@@ -955,6 +957,7 @@ static int sun50i_i2s_probe(struct platform_device *pdev)
 		goto err_suspend;
 	}
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	return 0;
 
 err_suspend:

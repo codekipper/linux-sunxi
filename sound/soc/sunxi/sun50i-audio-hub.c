@@ -272,6 +272,7 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 	void __iomem *regs;
 	int ret;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	audio_hub = devm_kzalloc(&pdev->dev, sizeof(*audio_hub), GFP_KERNEL);
 	if (!audio_hub)
 		return -ENOMEM;
@@ -309,6 +310,7 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 		return PTR_ERR(audio_hub->audio_hub_clk);
 	}
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
         ret = devm_snd_soc_register_component(&pdev->dev,
 					      audio_hub->variant->components,
 					      audio_hub->variant->dais,
@@ -318,6 +320,7 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	return 0;
 }
 

@@ -193,6 +193,7 @@ static int sun50i_audio_graph_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct snd_soc_card *card;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv)
 		return -ENOMEM;
@@ -207,6 +208,7 @@ static int sun50i_audio_graph_probe(struct platform_device *pdev)
 	priv->simple.ops = &sun50i_audio_graph_ops;
 	priv->simple.force_dpcm = 1;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	return audio_graph_parse_of(&priv->simple, dev);
 }
 

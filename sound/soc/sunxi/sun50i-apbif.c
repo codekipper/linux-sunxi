@@ -567,6 +567,7 @@ static int sun50i_apbif_probe(struct platform_device *pdev)
 	struct resource *res;
 	int err, i;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	apbif = devm_kzalloc(&pdev->dev, sizeof(*apbif), GFP_KERNEL);
 	if (!apbif)
 		return -ENOMEM;
@@ -604,6 +605,7 @@ static int sun50i_apbif_probe(struct platform_device *pdev)
 
 	regcache_cache_only(apbif->regmap, true);
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	for (i = 0; i < apbif->variant->num_ch; i++) {
 		apbif->playback_dma_data[i].addr = res->start/* + FIFO OFFSET */;
 
@@ -633,6 +635,7 @@ static int sun50i_apbif_probe(struct platform_device *pdev)
 		}
 	}
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	err = devm_snd_soc_register_component(&pdev->dev,
 					      apbif->variant->cmpnt,
 					      apbif->variant->dais,
@@ -643,6 +646,7 @@ static int sun50i_apbif_probe(struct platform_device *pdev)
 		return err;
 	}
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	pm_runtime_enable(&pdev->dev);
 
 	return 0;

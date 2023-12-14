@@ -1433,6 +1433,8 @@ patternProperties:
     description: Sunplus Technology Co., Ltd.
   "^SUNW,.*":
     description: Sun Microsystems, Inc
+  "^sunnzo,.*":
+    description: Sunnzo
   "^supermicro,.*":
     description: Super Micro Computer, Inc.
   "^swir,.*":

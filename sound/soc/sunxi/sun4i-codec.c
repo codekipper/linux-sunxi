@@ -591,7 +591,7 @@ static int sun4i_codec_hw_params(struct snd_pcm_substream *substream,
 	if (!clk_freq)
 		return -EINVAL;
 
-	ret = clk_set_rate(scodec->clk_module, clk_freq);
+	ret = clk_set_rate(scodec->clk_module, clk_freq * 2);
 	if (ret)
 		return ret;
 

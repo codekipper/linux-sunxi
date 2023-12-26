@@ -980,8 +980,9 @@
 			ranges = <0x0 0x5097000 0x10>;
 			status = "disabled";
 
-			sun50i_apbif: apbif@5097010 {
-				compatible = "allwinner,sun50i-h6-apbif";
+			apbif: apbif@5097010 {
+				compatible = "allwinner,sun50i-h616-apbif",
+					     "allwinner,sun50i-h6-apbif";
 				reg = <0x5097010 0x174>;
 				dmas = <&dma 1>,  <&dma 1>,
 				       <&dma 2>,  <&dma 2>,

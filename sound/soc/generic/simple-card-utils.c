@@ -1,3 +1,4 @@
+#define DEBUG
 // SPDX-License-Identifier: GPL-2.0
 //
 // simple-card-utils.c
@@ -870,6 +871,7 @@ int simple_util_init_priv(struct simple_util_priv *priv,
 	struct snd_soc_codec_conf *cconf = NULL;
 	int i, dai_num = 0, dlc_num = 0, cnf_num = 0;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	dai_props = devm_kcalloc(dev, li->link, sizeof(*dai_props), GFP_KERNEL);
 	dai_link  = devm_kcalloc(dev, li->link, sizeof(*dai_link),  GFP_KERNEL);
 	if (!dai_props || !dai_link)
@@ -889,6 +891,7 @@ int simple_util_init_priv(struct simple_util_priv *priv,
 			cnf_num += li->num[i].codecs;
 	}
 
+	printk("COOPS %s:%d dai_num %d dlc_num %d\n", __func__, __LINE__, dai_num, dlc_num);
 	dais = devm_kcalloc(dev, dai_num, sizeof(*dais), GFP_KERNEL);
 	dlcs = devm_kcalloc(dev, dlc_num, sizeof(*dlcs), GFP_KERNEL);
 	if (!dais || !dlcs)
@@ -985,6 +988,7 @@ int graph_util_card_probe(struct snd_soc_card *card)
 	struct simple_util_priv *priv = snd_soc_card_get_drvdata(card);
 	int ret;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	ret = simple_util_init_hp(card, &priv->hp_jack, NULL);
 	if (ret < 0)
 		return ret;
@@ -1035,6 +1039,7 @@ static int graph_get_dai_id(struct device_node *ep)
 
 	/* use driver specified DAI ID if exist */
 	ret = snd_soc_get_dai_id(ep);
+	printk("COOPS %s:%d ep %s ret %d\n", __func__, __LINE__, ep->name, ret);
 	if (ret != -ENOTSUPP)
 		return ret;
 
@@ -1057,6 +1062,7 @@ static int graph_get_dai_id(struct device_node *ep)
 			return info.port;
 	}
 	node = of_graph_get_port_parent(ep);
+	printk("COOPS %s:%d node %s\n", __func__, __LINE__, node->name);
 
 	/*
 	 * Non HDMI sound case, counting port/endpoint on its DT
@@ -1065,6 +1071,7 @@ static int graph_get_dai_id(struct device_node *ep)
 	i = 0;
 	id = -1;
 	for_each_endpoint_of_node(node, endpoint) {
+		printk("COOPS %s:%d endpoint %s\n", __func__, __LINE__, endpoint->name);
 		if (endpoint == ep)
 			id = i;
 		i++;
@@ -1091,6 +1098,7 @@ int graph_util_parse_dai(struct device *dev, struct device_node *ep,
 
 	node = of_graph_get_port_parent(ep);
 
+	printk("COOPS %s:%d node name %s\n", __func__, __LINE__, node->name);
 	/*
 	 * Try to find from DAI node
 	 */

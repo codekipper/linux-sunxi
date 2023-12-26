@@ -57,6 +57,7 @@ static int sun50i_audio_graph_update_pll(struct snd_pcm_substream *substream,
 	unsigned int srate = params_rate(params);
 	int err;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	switch (srate) {
 	case 11025:
 	case 22050:
@@ -140,6 +141,7 @@ static int sun50i_audio_graph_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	int err;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	/*
 	 * This gets called for each DAI link (FE or BE) when DPCM is used.
 	 * We may not want to update PLLA rate for each call. So PLLA update
@@ -172,6 +174,7 @@ static int sun50i_audio_graph_card_probe(struct snd_soc_card *card)
 	struct simple_util_priv *simple = snd_soc_card_get_drvdata(card);
 	struct sun50i_audio_priv *priv = simple_to_sun50i_priv(simple);
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	priv->clk_plla = devm_clk_get(card->dev, "pll_a");
 	if (IS_ERR(priv->clk_plla)) {
 		dev_err(card->dev, "Can't retrieve clk pll_a\n");

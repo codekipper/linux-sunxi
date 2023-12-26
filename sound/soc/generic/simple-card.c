@@ -1,3 +1,4 @@
+#define DEBUG
 // SPDX-License-Identifier: GPL-2.0
 //
 // ASoC simple sound card support
@@ -733,6 +734,7 @@ static int simple_probe(struct platform_device *pdev)
 	if (!priv)
 		return -ENOMEM;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	card = simple_priv_to_card(priv);
 	card->owner		= THIS_MODULE;
 	card->dev		= dev;
@@ -743,6 +745,7 @@ static int simple_probe(struct platform_device *pdev)
 	if (!li)
 		return -ENOMEM;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	ret = simple_get_dais_count(priv, li);
 	if (ret < 0)
 		return ret;
@@ -750,10 +753,12 @@ static int simple_probe(struct platform_device *pdev)
 	if (!li->link)
 		return -EINVAL;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	ret = simple_util_init_priv(priv, li);
 	if (ret < 0)
 		return ret;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	if (np && of_device_is_available(np)) {
 
 		ret = simple_parse_of(priv, li);
@@ -772,6 +777,7 @@ static int simple_probe(struct platform_device *pdev)
 
 		ret = -EINVAL;
 
+		printk("COOPS %s:%d\n", __func__, __LINE__);
 		cinfo = dev->platform_data;
 		if (!cinfo) {
 			dev_err(dev, "no info for asoc-simple-card\n");
@@ -793,6 +799,7 @@ static int simple_probe(struct platform_device *pdev)
 		codecs			= dai_link->codecs;
 		codecs->name		= cinfo->codec;
 		codecs->dai_name	= cinfo->codec_dai.name;
+		printk("COOPS %s:%d dai-name %s\n", __func__, __LINE__, codecs->dai_name);
 
 		platform		= dai_link->platforms;
 		platform->name		= cinfo->platform;

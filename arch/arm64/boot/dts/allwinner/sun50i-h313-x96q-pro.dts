@@ -123,6 +123,9 @@
 		};
 
 		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
 			ahub_i2s1_port: port@b {
 				reg = <0xb>;
 

@@ -6,6 +6,7 @@
 /dts-v1/;
 
 #include "sun50i-h616.dtsi"
+#include "sun50i-h616-ac300-ethernet.dtsi"
 #include "sun50i-h616-cpu-opp.dtsi"
 
 #include <dt-bindings/gpio/gpio.h>
@@ -16,6 +17,7 @@
 	compatible = "hechuang,x96-mate", "allwinner,sun50i-h616";
 
 	aliases {
+		ethernet0 = &emac1;
 		serial0 = &uart0;
 	};
 
@@ -43,6 +45,10 @@
 
 &ehci2 {
 	status = "okay";
+};
+
+&emac1 {
+	phy-supply = <&reg_aldo1>;
 };
 
 &ir {

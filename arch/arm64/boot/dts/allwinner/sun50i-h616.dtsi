@@ -208,8 +208,13 @@
 				reg = <0x14 0x8>;
 			};
 
+
 			cpu_speed_grade: cpu-speed-grade@0 {
 				reg = <0x0 2>;
+			};
+
+			ephy_calib: ephy_calib@2c {
+				reg = <0x2c 0x2>;
 			};
 		};
 

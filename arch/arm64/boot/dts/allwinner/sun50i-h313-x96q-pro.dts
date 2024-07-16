@@ -23,17 +23,6 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	connector {
-		compatible = "hdmi-connector";
-		type = "d";
-
-		port {
-			hdmi_con_in: endpoint {
-				remote-endpoint = <&hdmi_out_con>;
-			};
-		};
-	};
-
 	openvfd {
 		compatible = "open,vfd";
 		dev_name = "openvfd";
@@ -90,15 +79,6 @@
 	};
 };
 
-&codec {
-	allwinner,audio-routing = "Line Out", "LINEOUT";
-	status = "okay";
-};
-
-&de {
-	status = "okay";
-};
-
 &ehci0 {
 	status = "okay";
 };
@@ -116,17 +96,6 @@
 	allwinner,rx-delay-ps = <3100>;
 	allwinner,tx-delay-ps = <700>;
 	status = "okay";
-};
-
-&hdmi {
-	hvcc-supply = <&reg_aldo1>;
-	status = "okay";
-};
-
-&hdmi_out {
-	hdmi_out_con: endpoint {
-		remote-endpoint = <&hdmi_con_in>;
-	};
 };
 
 &ir {

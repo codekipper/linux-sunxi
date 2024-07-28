@@ -260,7 +260,6 @@ struct sun4i_codec {
 	struct device	*dev;
 	struct regmap	*regmap;
 	struct clk	*clk_apb;
-	struct clk	*clk_hs;
 	struct clk	*clk_module;
 	struct reset_control *rst;
 	struct gpio_desc *gpio_pa;
@@ -592,7 +591,7 @@ static int sun4i_codec_hw_params(struct snd_pcm_substream *substream,
 	if (!clk_freq)
 		return -EINVAL;
 
-	ret = clk_set_rate(scodec->clk_module, clk_freq);
+	ret = clk_set_rate(scodec->clk_module, clk_freq * 2);
 	if (ret)
 		return ret;
 
@@ -637,7 +636,6 @@ static int sun4i_codec_startup(struct snd_pcm_substream *substream,
 	regmap_field_set_bits(scodec->reg_dac_fifoc,
 			   3 << SUN4I_CODEC_DAC_FIFOC_DRQ_CLR_CNT);
 
-	clk_prepare_enable(scodec->clk_hs);
 	return clk_prepare_enable(scodec->clk_module);
 }
 
@@ -647,7 +645,6 @@ static void sun4i_codec_shutdown(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = snd_soc_substream_to_rtd(substream);
 	struct sun4i_codec *scodec = snd_soc_card_get_drvdata(rtd->card);
 
-	clk_disable_unprepare(scodec->clk_hs);
 	clk_disable_unprepare(scodec->clk_module);
 }
 
@@ -1820,7 +1817,6 @@ struct sun4i_codec_quirks {
 	unsigned int reg_dac_txdata;	/* TX FIFO offset for DMA config */
 	unsigned int reg_adc_rxdata;	/* RX FIFO offset for DMA config */
 	bool has_reset;
-	bool has_hs;
 	bool playback_only;
 };
 
@@ -1908,7 +1904,6 @@ static const struct sun4i_codec_quirks sun50i_h616_codec_quirks = {
 	.reg_dac_fifoc	= REG_FIELD(SUN50I_H616_CODEC_DAC_FIFOC, 0, 31),
 	.reg_dac_txdata	= SUN8I_H3_CODEC_DAC_TXDATA,
 	.has_reset	= true,
-	.has_hs		= true,
 };
 
 static const struct of_device_id sun4i_codec_of_match[] = {
@@ -1981,14 +1976,6 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 	if (IS_ERR(scodec->clk_apb)) {
 		dev_err(&pdev->dev, "Failed to get the APB clock\n");
 		return PTR_ERR(scodec->clk_apb);
-	}
-
-	if (quirks->has_hs) {
-		scodec->clk_hs = devm_clk_get(&pdev->dev, "hs");
-		if (IS_ERR(scodec->clk_hs)) {
-			dev_err(&pdev->dev, "Failed to get the hs clock\n");
-			return PTR_ERR(scodec->clk_hs);
-		}
 	}
 
 	scodec->clk_module = devm_clk_get(&pdev->dev, "codec");

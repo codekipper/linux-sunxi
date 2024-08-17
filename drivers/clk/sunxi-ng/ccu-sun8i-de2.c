@@ -8,6 +8,7 @@
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of.h>
+#include <linux/of_address.h>
 #include <linux/platform_device.h>
 #include <linux/reset.h>
 
@@ -300,6 +301,16 @@ static int sunxi_de2_clk_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev,
 			"Couldn't deassert reset control: %d\n", ret);
 		goto err_disable_mod_clk;
+	}
+ 
+	/*
+	 * The DE33 requires these additional (unknown) registers set
+	 * during initialisation.
+	 */
+	if (of_device_is_compatible(pdev->dev.of_node,
+				    "allwinner,sun50i-h616-de33-clk")) {
+		writel(0, reg + 0x24);
+		writel(0x0000a980, reg + 0x28);
 	}
 
 	/*

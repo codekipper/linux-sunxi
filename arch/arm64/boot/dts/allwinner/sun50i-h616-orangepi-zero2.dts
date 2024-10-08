@@ -40,7 +40,6 @@
 			sound-dai = <&pcm5102>;
 		};
 	};
-#else
 	ahub@5097000 {
 		status = "okay";
 

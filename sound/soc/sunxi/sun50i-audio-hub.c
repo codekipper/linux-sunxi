@@ -7,6 +7,7 @@
 #include <linux/clk.h>
 #include <linux/dmaengine.h>
 #include <linux/module.h>
+#include <linux/of_platform.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
@@ -283,6 +284,10 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
+        dev_set_drvdata(&pdev->dev, audio_hub);
+
+	of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
+
 	audio_hub->bus_clk = devm_clk_get(&pdev->dev, "apb");
 	if (IS_ERR(audio_hub->bus_clk)) {
 		dev_err(&pdev->dev, "Can't get our bus clock\n");
@@ -320,7 +325,7 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	printk("COOPS %s:%d\n", __func__, __LINE__);
+	dev_info(&pdev->dev, "Audio HUB registered\n");
 	return 0;
 }
 

@@ -91,6 +91,7 @@
 #define APBIF_RX_DAM1_TXDIF		15
 
 struct sun50i_apbif_quirks {
+	const char *name;
 	const struct snd_soc_component_driver *cmpnt;
 	const struct regmap_config *regmap_conf;
 	struct snd_soc_dai_driver *dais;
@@ -532,6 +533,7 @@ static const struct snd_soc_component_driver sun50i_apbif_cmpnt = {
 };
 
 static const struct sun50i_apbif_quirks sun50i_h6_apbif_quirks = {
+	.name		= "COOPS H6",
 	.num_ch		= 3,
 	.cmpnt		= &sun50i_apbif_cmpnt,
 	.dais		= sun50i_apbif_cmpnt_dais,
@@ -541,6 +543,7 @@ static const struct sun50i_apbif_quirks sun50i_h6_apbif_quirks = {
 static const struct sun50i_apbif_quirks sun50i_h616_apbif_quirks = {
 	/* Diffs so far */
 	/* Default for reg 0x114 different */
+	.name		= "COOPS H616",
 	.num_ch		= 3,
 	.cmpnt		= &sun50i_apbif_cmpnt,
 	.dais		= sun50i_apbif_cmpnt_dais,
@@ -576,6 +579,7 @@ static int sun50i_apbif_probe(struct platform_device *pdev)
 
 	dev_set_drvdata(&pdev->dev, apbif);
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	apbif->capture_dma_data =
 		devm_kcalloc(&pdev->dev,
 			     apbif->variant->num_ch,
@@ -584,6 +588,7 @@ static int sun50i_apbif_probe(struct platform_device *pdev)
 	if (apbif->capture_dma_data == NULL)
 		return -ENOMEM;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	apbif->playback_dma_data =
 		devm_kcalloc(&pdev->dev,
 			     apbif->variant->num_ch,
@@ -592,14 +597,17 @@ static int sun50i_apbif_probe(struct platform_device *pdev)
 	if (apbif->playback_dma_data == NULL)
 		return -ENOMEM;
 
+	printk("COOPS %s:%d\n", __func__, __LINE__);
 	regs = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
-	if (IS_ERR(regs))
+	if (IS_ERR(regs)) {
+		dev_err(&pdev->dev, "ioremap failed on %s.\n", apbif->variant->name);
 		return PTR_ERR(regs);
+	}
 
 	apbif->regmap = devm_regmap_init_mmio(&pdev->dev, regs,
 					       apbif->variant->regmap_conf);
 	if (IS_ERR(apbif->regmap)) {
-		dev_err(&pdev->dev, "regmap init failed\n");
+		dev_err(&pdev->dev, "regmap init failed on %s.\n", apbif->variant->name);
 		return PTR_ERR(apbif->regmap);
 	}
 

@@ -260,7 +260,7 @@ struct sun50i_audio_hub_quirks sun50i_h6_audio_hub = {
 };
 
 struct sun50i_audio_hub_quirks sun50i_h616_audio_hub = {
-	.has_audio_pll_clks = true,
+	.has_audio_pll_clks = false,
 	.sun50i_audio_hub_regmap = &sun50i_audio_hub_regmap_config,
 	.components = &sun50i_audio_hub_component,
 	.dais = sun50i_audio_hub_dais,
@@ -284,10 +284,6 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-        dev_set_drvdata(&pdev->dev, audio_hub);
-
-	of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
-
 	audio_hub->bus_clk = devm_clk_get(&pdev->dev, "apb");
 	if (IS_ERR(audio_hub->bus_clk)) {
 		dev_err(&pdev->dev, "Can't get our bus clock\n");
@@ -309,7 +305,7 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 		}
 	}
 
-	audio_hub->audio_hub_clk = devm_clk_get(&pdev->dev, "audio_hub");
+	audio_hub->audio_hub_clk = devm_clk_get(&pdev->dev, "audio-hub");
 	if (IS_ERR(audio_hub->audio_hub_clk)) {
 		dev_err(&pdev->dev, "Can't get our audio_hub clock\n");
 		return PTR_ERR(audio_hub->audio_hub_clk);
@@ -324,6 +320,10 @@ static int sun50i_audio_hub_dev_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "can't register AUDIO HUB component, err: %d\n", ret);
 		return ret;
 	}
+
+        dev_set_drvdata(&pdev->dev, audio_hub);
+
+	of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
 
 	dev_info(&pdev->dev, "Audio HUB registered\n");
 	return 0;

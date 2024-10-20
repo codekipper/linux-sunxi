@@ -971,7 +971,7 @@
 #else
 		ahub: ahub@5097000 {
 			compatible = "allwinner,sun50i-h616-audio-hub";
-			reg = <0x5097000 0xc>;
+			reg = <0x05097000 0x1000>;
 			clocks = <&ccu CLK_BUS_AUDIO_HUB>,
 				 <&ccu CLK_AUDIO_HUB>;
 			clock-names = "apb", "audio-hub";
@@ -983,7 +983,9 @@
 			apbif: apbif@5097010 {
 				compatible = "allwinner,sun50i-h616-apbif",
 					     "allwinner,sun50i-h6-apbif";
-				reg = <0x5097010 0x174>;
+				reg = <0x05097010 0x174>;
+				#address-cells = <1>;
+				#size-cells = <1>;
 				dmas = <&dma 1>,  <&dma 1>,
 				       <&dma 2>,  <&dma 2>,
 				       <&dma 3>,  <&dma 3>;

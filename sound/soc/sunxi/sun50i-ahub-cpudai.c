@@ -1,4 +1,4 @@
-/ SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * (C) Copyright 2014-2018
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
@@ -364,12 +364,7 @@ static int sunxi_ahub_cpudai_trigger(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static struct snd_soc_dai_ops sunxi_ahub_cpudai_dai_ops = {
-	.startup = sunxi_ahub_cpudai_startup,
-	.trigger = sunxi_ahub_cpudai_trigger,
-};
-
-static int sunxi_ahub_dai_probe(struct snd_soc_dai *dai)
+static int sunxi_ahub_cpudai_probe(struct snd_soc_dai *dai)
 {
         struct sunxi_ahub_cpudai_priv *sunxi_ahub_cpudai =
                                         snd_soc_dai_get_drvdata(dai);
@@ -381,8 +376,13 @@ static int sunxi_ahub_dai_probe(struct snd_soc_dai *dai)
         return 0;
 }
 
+static struct snd_soc_dai_ops sunxi_ahub_cpudai_dai_ops = {
+	.probe = sunxi_ahub_cpudai_probe,
+	.startup = sunxi_ahub_cpudai_startup,
+	.trigger = sunxi_ahub_cpudai_trigger,
+};
+
 static struct snd_soc_dai_driver sunxi_ahub_cpudai_dai = {
-	.probe = sunxi_ahub_dai_probe,
 	.playback = {
 		.channels_min = 1,
 		.channels_max = 16,

@@ -870,7 +870,7 @@
 			status = "disabled";
 		};
 
-#if 0
+#if 1
 		hdmi_audio: hdmi-audio@1 {
 			compatible = "allwinner,sunxi-hdmi-machine";
 			sunxi,cpudai-controller = <&ahub_i2s1>;

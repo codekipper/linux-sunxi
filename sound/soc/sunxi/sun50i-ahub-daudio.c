@@ -368,6 +368,80 @@ static int sunxi_ahub_daudio_init(
 	return 0;
 }
 
+static int sunxi_ahub_daudio_set_clkdiv(struct snd_soc_dai *dai,
+				int clk_id, int clk_div)
+{
+	struct sunxi_ahub_daudio_priv *sunxi_ahub_daudio =
+					snd_soc_dai_get_drvdata(dai);
+	unsigned int bclk_div, div_ratio;
+
+	printk("%s COOPS I2S%d tdm_config %d clk_div %d period %d\n", __func__, sunxi_ahub_daudio->tdm_num, sunxi_ahub_daudio->tdm_config , clk_div, sunxi_ahub_daudio->pcm_lrck_period);
+	if (sunxi_ahub_daudio->tdm_config)
+		/* I2S/TDM two channel mode */
+		div_ratio = clk_div / (sunxi_ahub_daudio->pcm_lrck_period * 2);
+	else
+		/* PCM mode */
+		div_ratio = clk_div / sunxi_ahub_daudio->pcm_lrck_period;
+
+	switch (div_ratio) {
+	case	1:
+		bclk_div = 1;
+		break;
+	case	2:
+		bclk_div = 2;
+		break;
+	case	4:
+		bclk_div = 3;
+		break;
+	case	6:
+		bclk_div = 4;
+		break;
+	case	8:
+		bclk_div = 5;
+		break;
+	case	12:
+		bclk_div = 6;
+		break;
+	case	16:
+		bclk_div = 7;
+		break;
+	case	24:
+		bclk_div = 8;
+		break;
+	case	32:
+		bclk_div = 9;
+		break;
+	case	48:
+		bclk_div = 10;
+		break;
+	case	64:
+		bclk_div = 11;
+		break;
+	case	96:
+		bclk_div = 12;
+		break;
+	case	128:
+		bclk_div = 13;
+		break;
+	case	176:
+		bclk_div = 14;
+		break;
+	case	192:
+		bclk_div = 15;
+		break;
+	default:
+		dev_err(sunxi_ahub_daudio->dev, "unsupport clk_div\n");
+		return -EINVAL;
+	}
+
+	/* setting bclk to driver external codec bit clk */
+	regmap_update_bits(sunxi_ahub_daudio->regmap,
+			SUNXI_AHUB_I2S_CLKD(sunxi_ahub_daudio->tdm_num),
+			(0xf<<I2S_CLKD_BCLKDIV), (bclk_div<<I2S_CLKD_BCLKDIV));
+
+	return 0;
+}
+
 static int sunxi_ahub_daudio_hw_params(struct snd_pcm_substream *substream,
 		struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
 {
@@ -563,80 +637,6 @@ static int sunxi_ahub_daudio_set_sysclk(struct snd_soc_dai *dai,
 	return 0;
 }
 
-static int sunxi_ahub_daudio_set_clkdiv(struct snd_soc_dai *dai,
-				int clk_id, int clk_div)
-{
-	struct sunxi_ahub_daudio_priv *sunxi_ahub_daudio =
-					snd_soc_dai_get_drvdata(dai);
-	unsigned int bclk_div, div_ratio;
-
-	printk("%s COOPS I2S%d tdm_config %d clk_div %d period %d\n", __func__, sunxi_ahub_daudio->tdm_num, sunxi_ahub_daudio->tdm_config , clk_div, sunxi_ahub_daudio->pcm_lrck_period);
-	if (sunxi_ahub_daudio->tdm_config)
-		/* I2S/TDM two channel mode */
-		div_ratio = clk_div / (sunxi_ahub_daudio->pcm_lrck_period * 2);
-	else
-		/* PCM mode */
-		div_ratio = clk_div / sunxi_ahub_daudio->pcm_lrck_period;
-
-	switch (div_ratio) {
-	case	1:
-		bclk_div = 1;
-		break;
-	case	2:
-		bclk_div = 2;
-		break;
-	case	4:
-		bclk_div = 3;
-		break;
-	case	6:
-		bclk_div = 4;
-		break;
-	case	8:
-		bclk_div = 5;
-		break;
-	case	12:
-		bclk_div = 6;
-		break;
-	case	16:
-		bclk_div = 7;
-		break;
-	case	24:
-		bclk_div = 8;
-		break;
-	case	32:
-		bclk_div = 9;
-		break;
-	case	48:
-		bclk_div = 10;
-		break;
-	case	64:
-		bclk_div = 11;
-		break;
-	case	96:
-		bclk_div = 12;
-		break;
-	case	128:
-		bclk_div = 13;
-		break;
-	case	176:
-		bclk_div = 14;
-		break;
-	case	192:
-		bclk_div = 15;
-		break;
-	default:
-		dev_err(sunxi_ahub_daudio->dev, "unsupport clk_div\n");
-		return -EINVAL;
-	}
-
-	/* setting bclk to driver external codec bit clk */
-	regmap_update_bits(sunxi_ahub_daudio->regmap,
-			SUNXI_AHUB_I2S_CLKD(sunxi_ahub_daudio->tdm_num),
-			(0xf<<I2S_CLKD_BCLKDIV), (bclk_div<<I2S_CLKD_BCLKDIV));
-
-	return 0;
-}
-
 static int sunxi_ahub_daudio_trigger(struct snd_pcm_substream *substream,
 				int cmd, struct snd_soc_dai *dai)
 {
@@ -668,16 +668,6 @@ static void sunxi_ahub_daudio_shutdown(struct snd_pcm_substream *substream,
 {
 }
 
-static struct snd_soc_dai_ops sunxi_ahub_cpu_dai_ops = {
-	.hw_params = sunxi_ahub_daudio_hw_params,
-	.set_sysclk = sunxi_ahub_daudio_set_sysclk,
-	.set_clkdiv = sunxi_ahub_daudio_set_clkdiv,
-	.set_fmt = sunxi_ahub_daudio_set_fmt,
-	.startup = sunxi_ahub_daudio_startup,
-	.trigger = sunxi_ahub_daudio_trigger,
-	.shutdown = sunxi_ahub_daudio_shutdown,
-};
-
 static int sunxi_ahub_daudio_probe(struct snd_soc_dai *dai)
 {
 	struct sunxi_ahub_daudio_priv *sunxi_ahub_daudio =
@@ -689,14 +679,18 @@ static int sunxi_ahub_daudio_probe(struct snd_soc_dai *dai)
 	return 0;
 }
 
-static int sunxi_ahub_daudio_remove(struct snd_soc_dai *dai)
-{
-	return 0;
-}
+static struct snd_soc_dai_ops sunxi_ahub_cpu_dai_ops = {
+	.probe = sunxi_ahub_daudio_probe,
+	.hw_params = sunxi_ahub_daudio_hw_params,
+	.set_sysclk = sunxi_ahub_daudio_set_sysclk,
+	.set_clkdiv = sunxi_ahub_daudio_set_clkdiv,
+	.set_fmt = sunxi_ahub_daudio_set_fmt,
+	.startup = sunxi_ahub_daudio_startup,
+	.trigger = sunxi_ahub_daudio_trigger,
+	.shutdown = sunxi_ahub_daudio_shutdown,
+};
 
 static struct snd_soc_dai_driver sunxi_ahub_daudio_mod = {
-	.probe = sunxi_ahub_daudio_probe,
-	.remove = sunxi_ahub_daudio_remove,
 	.playback = {
 		.channels_min = 1,
 		.channels_max = 16,

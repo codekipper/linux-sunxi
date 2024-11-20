@@ -67,4 +67,10 @@ config SND_SUN8I_ADDA_PR_REGMAP
 	tristate
 	select REGMAP
 
+config SND_SOC_SUN50I_AHUB
+        bool "Allwinner H616 Audio Hub Support for ASoc"
+        select REGMAP_MMIO
+        default n
+        help
+          Say Y or M if you want to using ahub module.
 endmenu

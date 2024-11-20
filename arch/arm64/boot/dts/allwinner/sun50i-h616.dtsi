@@ -935,6 +935,25 @@
 			status = "disabled";
 		};
 
+		ahub: ahub@5097000 {
+			compatible = "allwinner,sun50i-h616-audio-hub";
+			reg = <0x05097000 0x1000>;
+			clocks = <&ccu CLK_BUS_AUDIO_HUB>,
+			<&ccu CLK_AUDIO_HUB>;
+			clock-names = "apb", "audio-hub";
+			resets = <&ccu RST_BUS_AUDIO_HUB>;
+			status = "okay";
+			ranges = <0x0 0x05097000 0x0 0x0c>;
+
+			apbif: apbif@0 {
+				compatible = "allwinner,sun50i-h616-apbif",
+					     "allwinner,sun50i-h6-apbif";
+				reg = <0x10 0x05097000 0x174>;
+				status = "okay";
+				// Other properties for the child device
+			};
+		};
+
 		usbotg: usb@5100000 {
 			compatible = "allwinner,sun50i-h616-musb",
 				     "allwinner,sun8i-h3-musb";

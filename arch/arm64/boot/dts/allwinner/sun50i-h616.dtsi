@@ -935,7 +935,7 @@
 			status = "disabled";
 		};
 
-		ahub: ahub@5097000 {
+		audio_hub: audio_hub@5097000 {
 			compatible = "allwinner,sun50i-h616-audio-hub";
 			reg = <0x05097000 0x1000>;
 			clocks = <&ccu CLK_BUS_AUDIO_HUB>,
@@ -943,9 +943,18 @@
 			clock-names = "apb", "audio-hub";
 			resets = <&ccu RST_BUS_AUDIO_HUB>;
 			status = "okay";
-			ranges = <0x0 0x05097000 0x0 0x0c>;
+			#address-cells = <1>;    // Add this line
+ 			#size-cells = <2>;       // Add this line
 
-			apbif: apbif@0 {
+			xbar: xbar@5097000 {
+				compatible = "allwinner,sun50i-h616-xbar",
+					     "allwinner,sun50i-h6-xbar";
+				reg = <0x0 0x05097000 0xc>;
+				status = "okay";
+				// Other properties for the child device
+			};
+
+			apbif: apbif@5097010 {
 				compatible = "allwinner,sun50i-h616-apbif",
 					     "allwinner,sun50i-h6-apbif";
 				reg = <0x10 0x05097000 0x174>;

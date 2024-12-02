@@ -3,6 +3,7 @@
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/of.h>
+#include <linux/of_platform.h>
 #include <linux/regmap.h>
 #include <linux/reset.h>
 
@@ -27,31 +28,18 @@ static int ahub_probe(struct platform_device *pdev)
     struct reset_control *rst;
     int ret;
 
-    // Step 1: Get the resource from the platform device (the memory region)
     res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
     if (!res) {
-        dev_err(dev, "Failed to get memory resource\n");
+        dev_err(dev, "Failed to get parent resource\n");
         return -ENODEV;
     }
 
-    // Print the resource address and size for debugging
-    dev_info(dev, "AHUB resource: start=0x%llx, size=0x%llx\n",
-             (unsigned long long)res->start, (unsigned long long)resource_size(res));
-
-    // Step 2: Map the memory region for use
-    base = devm_ioremap_resource(dev, res);
+    // Step 2: Map the child device's resource using the parent device's memory region
+    base = devm_ioremap_resource(dev, res);  // Offset and size specific to child device
     if (IS_ERR(base)) {
-        dev_err(dev, "Failed to map memory\n");
+        dev_err(dev, "Failed to map memory for APBIF\n");
         return PTR_ERR(base);
     }
-
-    // Initialize regmap for AHUB using the mapped base address
-    ahub_regmap = devm_regmap_init_mmio(dev, base, &ahub_regmap_config);
-    if (IS_ERR(ahub_regmap)) {
-        dev_err(dev, "Failed to initialize regmap\n");
-        return PTR_ERR(ahub_regmap);
-    }
-
     // Step 3: Get the clock for the AHUB device
     apb_clk = devm_clk_get(dev, "apb");
     if (IS_ERR(apb_clk)) {
@@ -94,22 +82,7 @@ static int ahub_probe(struct platform_device *pdev)
 		reset_control_deassert(rst);
  		dev_info(dev, "AHUB device reset deasserted\n");
          }
-#if 0
-    // Allocate the child device (apbif)
-    struct platform_device *child_pdev = platform_device_alloc("apbif", -1);
-    if (!child_pdev) {
-        dev_err(dev, "Failed to allocate apbif device\n");
-        return -ENOMEM;
-    }
-
-    // Add the child device (apbif)
-    ret = platform_device_add(child_pdev);
-    if (ret) {
-        dev_err(dev, "Failed to add apbif device\n");
-        platform_device_put(child_pdev);
-        return ret;
-    }
-#endif
+    of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
     dev_info(dev, "AHUB device probed successfully\n");
     return 0;
 }

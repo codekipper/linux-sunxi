@@ -8,4 +8,5 @@ obj-$(CONFIG_SND_SUN8I_CODEC) += sun8i-codec.o
 obj-$(CONFIG_SND_SUN8I_ADDA_PR_REGMAP) += sun8i-adda-pr-regmap.o
 obj-$(CONFIG_SND_SUN50I_DMIC) += sun50i-dmic.o
 obj-$(CONFIG_SND_SOC_SUN50I_AHUB) += sun50i-audio-hub.o
+obj-$(CONFIG_SND_SOC_SUN50I_AHUB) += sun50i-xbar.o
 obj-$(CONFIG_SND_SOC_SUN50I_AHUB) += sun50i-apbif.o

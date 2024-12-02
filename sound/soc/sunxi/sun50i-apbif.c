@@ -7,7 +7,7 @@
 static int apbif_probe(struct platform_device *pdev)
 {
     struct device *dev = &pdev->dev;
-    //struct platform_device *parent_pdev = to_platform_device(dev->parent);
+    struct platform_device *parent_pdev = to_platform_device(dev->parent);
     struct resource *res;
     void __iomem *base;
     struct regmap *regmap;
@@ -19,16 +19,18 @@ static int apbif_probe(struct platform_device *pdev)
     int ret;
 
     dev_info(dev, "APBIF device started probing\n");
-#if 0
+#if 1
     // Step 1: Get the parent's allocated resource (memory region)
-    res = platform_get_resource(parent_pdev, IORESOURCE_MEM, 0);
+    res = platform_get_resource(pdev, IORESOURCE_MEM, 0);  // 0 is the index for apbif's reg
     if (!res) {
-        dev_err(dev, "Failed to get parent resource\n");
+        dev_err(&pdev->dev, "Failed to get resource for apbif\n");
         return -ENODEV;
     }
-
-    // Step 2: Map the child device's resource using the parent device's memory region
-    base = devm_ioremap(dev, res->start + 0x10, 0x174);  // Offset and size specific to child device
+    base = devm_ioremap(&pdev->dev, res->start + 0x10, 0x174);  // Offset and size specific to child device
+    //base = devm_ioremap_resource(dev, res);
+#else
+    base = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
+#endif
     if (IS_ERR(base)) {
         dev_err(dev, "Failed to map memory for APBIF\n");
         return PTR_ERR(base);
@@ -43,22 +45,21 @@ static int apbif_probe(struct platform_device *pdev)
     }
 
     // Step 4: Use regmap to access registers (Example: write and read registers)
-    ret = regmap_write(regmap, 0x10, 0x12345678);  // Write to a register
+    ret = regmap_write(regmap, 0x0, 0x3100);  // Write to a register
     if (ret) {
         dev_err(dev, "Failed to write to register\n");
         return ret;
     }
 
     u32 value;
-    ret = regmap_read(regmap, 0x10, &value);  // Read from a register
+    ret = regmap_read(regmap, 0x0, &value);  // Read from a register
     if (ret) {
         dev_err(dev, "Failed to read from register\n");
         return ret;
     }
 
-    dev_info(dev, "Read 0x%08x from register 0x10\n", value);
+    dev_info(dev, "Read 0x%08x from register 0x0\n", value);
 
-#endif
     dev_info(dev, "APBIF device probed successfully\n");
     return 0;
 }
